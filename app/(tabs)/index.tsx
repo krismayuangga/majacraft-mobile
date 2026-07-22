@@ -1,17 +1,28 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, SafeAreaView } from 'react-native';
-import { WebView } from 'react-native-webview';
+import WebView from 'react-native-webview';
 import { API_BASE_URL } from '../../constants/config';
 import { getAuthToken } from '../../lib/auth';
 
 export default function Home() {
   const webViewRef = useRef<WebView>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load auth token on mount
+    loadAuthToken();
+  }, []);
+
+  const loadAuthToken = async () => {
+    const token = await getAuthToken();
+    setAuthToken(token);
+  };
 
   // Inject auth token into WebView
   const injectedJavaScript = `
-    (async function() {
-      const token = '${await getAuthToken()}';
+    (function() {
+      const token = '${authToken || ''}';
       if (token) {
         localStorage.setItem('auth_token', token);
       }
@@ -38,23 +49,26 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <WebView
-        ref={webViewRef}
-        source={{ uri: API_BASE_URL }}
-        style={styles.webview}
-        onLoadStart={() => setIsLoading(true)}
-        onLoadEnd={() => setIsLoading(false)}
-        onMessage={handleMessage}
-        injectedJavaScript={injectedJavaScript}
-        javaScriptEnabled
-        domStorageEnabled
-        startInLoadingState
-        renderLoading={() => (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-          </View>
-        )}
-      />
+      {authToken !== null && (
+        // @ts-ignore - WebView types have known issues with strict mode
+        <WebView
+          ref={webViewRef}
+          source={{ uri: API_BASE_URL }}
+          style={styles.webview}
+          onLoadStart={() => setIsLoading(true)}
+          onLoadEnd={() => setIsLoading(false)}
+          onMessage={handleMessage}
+          injectedJavaScript={injectedJavaScript}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          startInLoadingState={true}
+          renderLoading={() => (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007AFF" />
+            </View>
+          )}
+        />
+      )}
       {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#007AFF" />
