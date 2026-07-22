@@ -1,205 +1,150 @@
-# MajaCraft Mobile App
+# MajaCraft Mobile
 
-Mobile application untuk marketplace MajaCraft menggunakan React Native + Expo.
+Mobile application untuk MajaCraft marketplace - platform jual beli kerajinan lokal Indonesia.
 
-## 🎯 Arsitektur
+## 📱 Overview
 
-Mobile app ini menggunakan **Hybrid Approach**:
-- **60% WebView**: Untuk konten-heavy pages (browsing, detail produk, dll)
-- **40% Native**: Untuk critical UX (upload, checkout, notifications)
+MajaCraft Mobile adalah React Native app yang dibangun dengan Expo SDK 54, menyediakan akses mobile-friendly ke platform MajaCraft dengan fitur:
 
-## 📦 Tech Stack
+- ✅ User Authentication (Login/Register)
+- ✅ Browse products via WebView
+- ✅ Upload & manage products (sellers)
+- ✅ Order management
+- ✅ User profile management
+- ✅ Camera & image picker integration
+- ✅ Push notifications (configured)
 
-- **Framework**: React Native (Expo SDK 57)
-- **Navigation**: Expo Router (file-based routing)
-- **State Management**: React Context API
-- **HTTP Client**: Axios
-- **Storage**: AsyncStorage
-- **UI**: React Native Components + Custom Components
+## 🚀 Quick Start
 
-## 🚀 Cara Menjalankan
+### For Local Development (Recommended)
 
-### Prerequisites
-- Node.js 18+ (tested on v24.8.0)
-- npm atau yarn
-- Expo Go app di smartphone (untuk testing)
-- Android Studio (untuk build Android)
+**Dokumentasi Lengkap:** [LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md)
 
-### Installation
-
+**Quick Steps:**
 ```bash
-# Install dependencies
-npm install
+# 1. Clone repo
+git clone https://github.com/krismayuangga/majacraft-mobile.git
+cd majacraft-mobile
 
-# Start development server
-npm start
+# 2. Install dependencies
+npm install --legacy-peer-deps
 
-# Run on Android
-npm run android
-
-# Run on iOS (macOS only)
-npm run ios
-
-# Run on web browser
-npm run web
+# 3. Run on Android emulator
+npx expo run:android
 ```
 
-## 📁 Struktur Project
+**Prerequisites:**
+- Node.js 18+ or 20+
+- Android Studio + Android SDK
+- Android Emulator (Pixel 5 recommended)
+
+👉 **Lihat [QUICKSTART.md](./QUICKSTART.md) untuk setup cepat!**
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [QUICKSTART.md](./QUICKSTART.md) | Setup cepat 5 langkah untuk mulai development |
+| [LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md) | Panduan lengkap development lokal dengan Android emulator |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System architecture, tech stack, data flow, dan patterns |
+
+## 🏗️ Tech Stack
+
+- **Framework:** Expo SDK 54.0.0
+- **React:** 19.1.0
+- **React Native:** 0.81.5
+- **Language:** TypeScript 5.9.2
+- **Navigation:** Expo Router 6.0.24
+- **Storage:** AsyncStorage
+- **HTTP Client:** Axios
+- **State Management:** React Context API
+
+## 📁 Project Structure
 
 ```
 majacraft-mobile/
-├── app/                      # Expo Router screens
-│   ├── (auth)/              # Auth flow (login, register, OTP)
-│   ├── (tabs)/              # Main app tabs
-│   ├── _layout.tsx          # Root layout
-│   └── index.tsx            # Splash screen
-├── components/              # Reusable components
-├── constants/               # App configuration
-│   └── config.ts            # API endpoints & config
-├── lib/                     # Core utilities
-│   ├── api.ts               # API client (Axios)
-│   ├── auth.ts              # Auth utilities
-│   └── AuthContext.tsx      # Auth state management
-├── types/                   # TypeScript types
-│   └── index.ts             # Shared types
-├── app.json                 # Expo configuration
-├── package.json             # Dependencies
-└── tsconfig.json            # TypeScript config
+├── app/                    # Expo Router pages
+│   ├── (auth)/            # Auth screens (login, register)
+│   └── (tabs)/            # Main app tabs (home, upload, orders, profile)
+├── lib/                   # Business logic & utilities
+├── constants/             # Configuration
+├── types/                 # TypeScript definitions
+└── assets/                # Images & icons
 ```
 
-## 🔐 Authentication
+## 🔌 Backend Integration
 
-Aplikasi menggunakan session-based authentication dengan flow:
-1. User login dengan nomor telepon + PIN
-2. Jika perlu verifikasi, sistem kirim OTP
-3. Setelah verifikasi, user mendapat auth token
-4. Token disimpan di AsyncStorage
-5. Token digunakan untuk semua API requests
+**API Base URL:** `http://72.61.208.189:3001`
 
-## 🌐 API Integration
+Backend repository: [krismayuangga/majacraft](https://github.com/krismayuangga/majacraft)
 
-API client di `lib/api.ts` otomatis:
-- Inject auth token ke setiap request
-- Handle error responses
-- Support file upload dengan progress
-
-Base URL:
-- Development: `http://localhost:3000`
-- Production: `https://majacraft.id`
-
-## 📱 Fitur Utama (Planned)
-
-### Phase 1 (Core Features)
-- [x] Authentication (Login/Register/OTP)
-- [x] WebView integration untuk browsing
-- [ ] Native upload produk (foto/video)
-- [ ] Native checkout flow
-- [ ] Push notifications setup
-
-### Phase 2 (Enhanced UX)
-- [ ] Product listing dengan native UI
-- [ ] Order management
-- [ ] User profile
-- [ ] Review & rating system
-- [ ] Real-time notifications
-
-### Phase 3 (Advanced Features)
-- [ ] Offline mode
-- [ ] In-app messaging
-- [ ] Payment gateway integration
-- [ ] Analytics & tracking
-
-## 🔧 Configuration
-
-### Android Package Name
-`com.majacraft.app`
-
-### iOS Bundle Identifier
-`com.majacraft.app`
-
-### Permissions Required
-- Camera (untuk foto produk)
-- Gallery/Media (untuk pilih foto/video)
-- Notifications (untuk push notifications)
-
-## 🏗️ Build untuk Production
-
-### Android APK/AAB
-
-```bash
-# Build APK (untuk testing)
-eas build --platform android --profile preview
-
-# Build AAB (untuk Google Play Store)
-eas build --platform android --profile production
+**Test Account:**
+```
+Email: testmobile@majacraft.id
+Password: password123
 ```
 
-### iOS (macOS required)
+## 🛠️ Development Commands
 
 ```bash
-# Build untuk App Store
-eas build --platform ios --profile production
-```
+# Start development server
+npm start
 
-> **Note**: Untuk build production, perlu setup EAS (Expo Application Services). Jalankan `eas login` dan `eas build:configure` terlebih dahulu.
+# Run on Android emulator
+npx expo run:android
 
-## 📋 Deployment Checklist
-
-### Google Play Store
-- [ ] Buat akun Google Play Console
-- [ ] Setup app di console (nama, deskripsi, icon, screenshots)
-- [ ] Build AAB dengan `eas build`
-- [ ] Upload AAB ke Play Console
-- [ ] Isi privacy policy, content rating
-- [ ] Submit untuk review
-
-### Apple App Store
-- [ ] Buat akun Apple Developer (macOS required)
-- [ ] Setup app di App Store Connect
-- [ ] Build IPA dengan `eas build`
-- [ ] Upload via Transporter atau Xcode
-- [ ] Submit untuk review
-
-## 🔔 Push Notifications
-
-Setup Expo Notifications untuk real-time alerts:
-
-1. User beri permission saat first launch
-2. App register device token ke backend
-3. Backend kirim notifikasi via Expo Push API
-4. App terima & tampilkan notification
-
-## 🐛 Debugging
-
-```bash
-# Clear cache dan restart
-npm run reset
-
-# Check TypeScript errors
+# Type check
 npx tsc --noEmit
 
-# Check for Expo issues
-npx expo-doctor
+# Clear cache & restart
+npm start -- --clear
 ```
 
-## 🔗 Links
+## 📦 Build Production APK
 
-- **Main Website**: https://majacraft.id
-- **Backend API**: Same as website backend
-- **GitHub**: (URL repository)
+### Via EAS Build (Cloud)
+```bash
+npm install -g eas-cli
+eas login
+eas build --platform android --profile preview
+```
 
-## 📝 License
+### Via Gradle (Local)
+```bash
+cd android
+./gradlew assembleRelease
+```
 
-Proprietary - MajaCraft © 2026
+APK output: `android/app/build/outputs/apk/release/app-release.apk`
 
-## 👥 Team
+## 🐛 Known Issues
 
-- **Developer**: (nama developer)
-- **Designer**: (nama designer)
-- **PM**: (nama PM)
+### Expo Go SDK Compatibility
+**Issue:** Expo Go di Play Store support SDK 54, tapi ada masalah splash screen stuck.
+
+**Solution:** **Gunakan local development build** (`npx expo run:android`) bukan Expo Go.
+
+### Package Version Warnings
+**Issue:** npm menampilkan peer dependency warnings.
+
+**Solution:** Install dengan flag `--legacy-peer-deps` (sudah correct).
+
+## 📞 Support
+
+**Issues:** https://github.com/krismayuangga/majacraft-mobile/issues
+
+**Backend:** https://github.com/krismayuangga/majacraft
+
+## 📄 License
+
+MIT License - Free to use and modify
+
+## 🙏 Credits
+
+Developed with AI assistance (GitHub Copilot + Claude) for rapid prototyping and best practices implementation.
 
 ---
 
-**Status**: 🚧 In Development (Phase 1)
-**Target Launch**: Q2 2026
-**Last Updated**: January 22, 2026
+**Version:** 1.0.0  
+**Last Updated:** 2026-07-22  
+**Expo SDK:** 54.0.0
