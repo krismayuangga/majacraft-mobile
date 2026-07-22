@@ -1,7 +1,7 @@
 // API Configuration
 export const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:3000' 
-  : 'https://majacraft.id';
+  ? 'http://72.61.208.189:3001'  // Development server (accessible from physical device)
+  : 'https://majacraft.id';       // Production server
 
 export const API_ENDPOINTS = {
   // Mobile-specific auth endpoints (return JWT token)
