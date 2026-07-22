@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
 import * as AuthStorage from '../lib/auth';
+import { registerForPushNotifications, savePushToken, setupNotificationListeners } from './notifications';
 
 interface AuthContextType {
   user: User | null;
@@ -22,6 +23,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUserData();
   }, []);
 
+  // Setup push notifications when user is authenticated
+  useEffect(() => {
+    if (user) {
+      setupPushNotifications();
+    }
+
+    // Setup notification listeners
+    const cleanup = setupNotificationListeners(
+      (notification) => {
+        console.log('Foreground notification:', notification);
+      },
+      (response) => {
+        console.log('Notification tapped:', response);
+        // TODO: Navigate to relevant screen based on notification data
+      }
+    );
+
+    return cleanup;
+  }, [user]);
+
   const loadUserData = async () => {
     try {
       const [token, userData] = await Promise.all([
@@ -36,6 +57,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error loading user data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const setupPushNotifications = async () => {
+    try {
+      const token = await registerForPushNotifications();
+      if (token) {
+        await savePushToken(token);
+        console.log('Push notifications registered successfully');
+      }
+    } catch (error) {
+      console.error('Error setting up push notifications:', error);
     }
   };
 
