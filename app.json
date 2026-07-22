@@ -33,8 +33,7 @@
         "READ_MEDIA_IMAGES",
         "READ_MEDIA_VIDEO",
         "NOTIFICATIONS"
-      ],
-      "googleServicesFile": "./google-services.json"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
