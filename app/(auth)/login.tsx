@@ -20,43 +20,46 @@ import { AuthResponse } from '../../types';
 export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [pin, setPin] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!phoneNumber.trim()) {
-      Alert.alert('Error', 'Nomor telepon wajib diisi');
+    if (!email.trim()) {
+      Alert.alert('Error', 'Email wajib diisi');
       return;
     }
 
-    if (!pin.trim()) {
-      Alert.alert('Error', 'PIN wajib diisi');
+    // Validasi format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Format email tidak valid');
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert('Error', 'Password wajib diisi');
       return;
     }
 
     setIsLoading(true);
     try {
       const response = await api.post<AuthResponse>(API_ENDPOINTS.LOGIN, {
-        phoneNumber: phoneNumber.trim(),
-        pin: pin.trim(),
+        email: email.toLowerCase().trim(),
+        password: password.trim(),
       });
 
       if (response.success && response.data?.user && response.data?.token) {
         await login(response.data.token, response.data.user);
         router.replace('/(tabs)');
-      } else if (response.data?.requiresOTP) {
-        // Navigate to OTP verification
-        router.push({
-          pathname: '/(auth)/verify-otp',
-          params: { phoneNumber: phoneNumber.trim() },
-        });
       } else {
         Alert.alert('Error', response.message || 'Login gagal');
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      Alert.alert('Error', error.message || 'Terjadi kesalahan saat login');
+      // Error dari interceptor sudah di-format
+      const errorMessage = error.message || 'Terjadi kesalahan saat login';
+      Alert.alert('Login Gagal', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -74,29 +77,29 @@ export default function Login() {
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nomor Telepon</Text>
+            <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
-              placeholder="08xxxxxxxxxx"
-              keyboardType="phone-pad"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
+              placeholder="nama@email.com"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
               editable={!isLoading}
               autoCapitalize="none"
+              autoCorrect={false}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>PIN</Text>
+            <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
-              placeholder="Masukkan PIN Anda"
+              placeholder="Masukkan password Anda"
               secureTextEntry
-              keyboardType="number-pad"
-              value={pin}
-              onChangeText={setPin}
+              value={password}
+              onChangeText={setPassword}
               editable={!isLoading}
-              maxLength={6}
+              autoCapitalize="none"
             />
           </View>
 
@@ -132,9 +135,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
+  },
+  content: {
     paddingHorizontal: 24,
   },
   title: {

@@ -1,21 +1,42 @@
-// User Types
+// Auth types
+export interface Store {
+  id: string;
+  name: string;
+  slug: string;
+  province: string;
+  isVerified: boolean;
+  rating?: number;
+  totalSold?: number;
+}
+
 export interface User {
   id: string;
   name: string;
-  email?: string;
-  phoneNumber: string;
-  avatar?: string;
-  role: 'USER' | 'ADMIN';
-  createdAt: string;
-  updatedAt: string;
+  email: string;
+  phone?: string;
+  image?: string;
+  role: 'BUYER' | 'SELLER' | 'ADMIN';
+  status: 'ACTIVE' | 'SUSPENDED' | 'BANNED';
+  kycStatus: 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+  store?: Store;
 }
 
 export interface AuthResponse {
-  success: boolean;
-  message: string;
-  requiresOTP?: boolean;
-  user?: User;
-  token?: string;
+  token: string;
+  user: User;
+}
+
+export interface RegisterInput {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: 'BUYER' | 'SELLER';
+  // Seller fields (optional)
+  storeName?: string;
+  province?: string;
+  bankName?: string;
+  bankAccount?: string;
 }
 
 // Product Types

@@ -32,7 +32,7 @@ export default function Profile() {
         {user && (
           <View style={styles.userInfo}>
             <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.phone}>{user.phoneNumber}</Text>
+            <Text style={styles.phone}>{user.phone || '-'}</Text>
             {user.email && <Text style={styles.email}>{user.email}</Text>}
           </View>
         )}

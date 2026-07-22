@@ -4,12 +4,10 @@ export const API_BASE_URL = __DEV__
   : 'https://majacraft.id';
 
 export const API_ENDPOINTS = {
-  // Auth
-  LOGIN: '/api/auth/login',
-  REGISTER: '/api/auth/register',
-  VERIFY_OTP: '/api/auth/verify-otp',
-  REQUEST_OTP: '/api/auth/request-otp',
-  LOGOUT: '/api/auth/logout',
+  // Mobile-specific auth endpoints (return JWT token)
+  LOGIN: '/api/auth/mobile/login',
+  REGISTER: '/api/auth/mobile/register',
+  ME: '/api/auth/mobile/me',
   
   // User
   PROFILE: '/api/user/profile',
