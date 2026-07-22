@@ -24,17 +24,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadUserData = async () => {
     try {
+      console.log('AuthContext: Loading user data...');
       const [token, userData] = await Promise.all([
         AuthStorage.getAuthToken(),
         AuthStorage.getUserData(),
       ]);
 
+      console.log('AuthContext: Token exists?', !!token, 'User exists?', !!userData);
+
       if (token && userData) {
         setUser(userData);
+        console.log('AuthContext: User loaded:', userData.name);
+      } else {
+        console.log('AuthContext: No auth data found');
       }
     } catch (error) {
       console.error('Error loading user data:', error);
     } finally {
+      console.log('AuthContext: Loading complete');
       setIsLoading(false);
     }
   };

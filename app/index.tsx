@@ -1,23 +1,20 @@
 import { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { useRouter, Redirect } from 'expo-router';
 import { useAuth } from '../lib/AuthContext';
 import { StatusBar } from 'expo-status-bar';
 
 export default function Index() {
-  const router = useRouter();
   const { isLoading, isAuthenticated } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading) {
-      // Navigate based on auth status
-      if (isAuthenticated) {
-        router.replace('/(tabs)');
-      } else {
-        router.replace('/(auth)/login');
-      }
+  // Direct redirect approach
+  if (!isLoading) {
+    if (isAuthenticated) {
+      return <Redirect href="/(tabs)" />;
+    } else {
+      return <Redirect href="/(auth)/login" />;
     }
-  }, [isLoading, isAuthenticated]);
+  }
 
   return (
     <View style={styles.container}>
