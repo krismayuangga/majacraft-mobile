@@ -1,29 +1,8 @@
-import { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { useRouter, Redirect } from 'expo-router';
-import { useAuth } from '../lib/AuthContext';
-import { StatusBar } from 'expo-status-bar';
+import { Redirect } from 'expo-router';
 
 export default function Index() {
-  const { isLoading, isAuthenticated } = useAuth();
-
-  // Direct redirect approach
-  if (!isLoading) {
-    if (isAuthenticated) {
-      return <Redirect href="/(tabs)" />;
-    } else {
-      return <Redirect href="/(auth)/login" />;
-    }
-  }
-
-  return (
-    <View style={styles.container}>
-      <StatusBar style="auto" />
-      <Text style={styles.title}>MajaCraft</Text>
-      <ActivityIndicator size="large" color="#007AFF" style={styles.loader} />
-      <Text style={styles.subtitle}>Loading...</Text>
-    </View>
-  );
+  // Langsung redirect ke login
+  return <Redirect href="/(auth)/login" />;
 }
 
 const styles = StyleSheet.create({
