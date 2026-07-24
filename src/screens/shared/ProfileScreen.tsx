@@ -3,10 +3,53 @@ import {
   View, Text, StyleSheet, SafeAreaView,
   ScrollView, TouchableOpacity, Image, Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../lib/AuthContext';
+import { RootStackParamList } from '../../navigation/types';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+// ─── Guest view (belum login) ─────────────────────────────────────────────────
+
+function GuestProfile() {
+  const navigation = useNavigation<Nav>();
+  return (
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.guestContainer}>
+        <View style={styles.guestAvatar}>
+          <Text style={styles.guestAvatarText}>👤</Text>
+        </View>
+        <Text style={styles.guestTitle}>Belum Masuk</Text>
+        <Text style={styles.guestSubtitle}>
+          Masuk untuk melihat profil, riwayat pesanan, dan fitur lengkap MajaCraft
+        </Text>
+        <TouchableOpacity
+          style={styles.guestLoginBtn}
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text style={styles.guestLoginText}>Masuk</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.guestRegisterBtn}
+          onPress={() => navigation.navigate('Register')}
+        >
+          <Text style={styles.guestRegisterText}>Daftar Akun Baru</Text>
+        </TouchableOpacity>
+        <Text style={styles.guestNote}>
+          Bergabung dan jual/beli kerajinan tangan Indonesia
+        </Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Authenticated profile ────────────────────────────────────────────────────
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) return <GuestProfile />;
 
   const handleLogout = () => {
     Alert.alert('Keluar', 'Yakin ingin keluar?', [
@@ -89,6 +132,35 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0f0f0f' },
+
+  // Guest styles
+  guestContainer: {
+    flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32,
+  },
+  guestAvatar: {
+    width: 96, height: 96, borderRadius: 48,
+    backgroundColor: '#1c1c1e', alignItems: 'center', justifyContent: 'center',
+    marginBottom: 20,
+  },
+  guestAvatarText: { fontSize: 40 },
+  guestTitle: { color: '#f5f5f0', fontSize: 22, fontWeight: '700', marginBottom: 12 },
+  guestSubtitle: {
+    color: '#6b7280', fontSize: 14, textAlign: 'center',
+    lineHeight: 20, marginBottom: 32,
+  },
+  guestLoginBtn: {
+    backgroundColor: '#d97706', borderRadius: 12, width: '100%',
+    padding: 16, alignItems: 'center', marginBottom: 12,
+  },
+  guestLoginText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  guestRegisterBtn: {
+    borderWidth: 1, borderColor: '#d97706', borderRadius: 12, width: '100%',
+    padding: 16, alignItems: 'center', marginBottom: 24,
+  },
+  guestRegisterText: { color: '#d97706', fontWeight: '600', fontSize: 16 },
+  guestNote: { color: '#374151', fontSize: 12, textAlign: 'center' },
+
+  // Authenticated styles
   body: { padding: 20, paddingBottom: 40 },
   avatarRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
   avatar: { width: 72, height: 72, borderRadius: 36, marginRight: 16 },

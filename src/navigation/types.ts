@@ -1,19 +1,16 @@
 /** Navigation type definitions */
 
-export type AuthStackParamList = {
-  Login: undefined;
-  Register: undefined;
-};
-
 export type MainTabParamList = {
-  Home:    undefined;  // WebView buyer
-  Orders:  undefined;  // WebView pesanan
-  Upload:  undefined;  // Native kamera (seller only)
-  Studio:  undefined;  // WebView studio seller
-  Profile: undefined;  // Native profile
+  Home:    undefined;
+  Search:  undefined;
+  Cart:    undefined;
+  Orders:  undefined;
+  Profile: undefined;
 };
 
+/** Root stack — Tabs always rendered; Login/Register as modals */
 export type RootStackParamList = {
-  Auth: undefined;
-  Main: undefined;
+  Tabs:     undefined;
+  Login:    { redirect?: string } | undefined;
+  Register: undefined;
 };

@@ -1,120 +1,88 @@
-import React from 'react';
+﻿import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 
 import { AuthProvider, useAuth } from '../lib/AuthContext';
-import { AuthStackParamList, MainTabParamList } from './types';
-
-// Screens
+import { MainTabParamList, RootStackParamList } from './types';
 import LoginScreen    from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
-import HomeScreen     from '../screens/buyer/HomeScreen';
-import UploadScreen   from '../screens/seller/UploadScreen';
-import StudioScreen   from '../screens/seller/StudioScreen';
-import OrdersScreen   from '../screens/shared/OrdersScreen';
-import ProfileScreen  from '../screens/shared/ProfileScreen';
+import TabWebView     from '../screens/main/TabWebView';
+import CustomTabBar   from './CustomTabBar';
+import { WEB_PAGES } from '../constants/config';
 
-const AuthStack = createNativeStackNavigator<AuthStackParamList>();
-const Tab       = createBottomTabNavigator<MainTabParamList>();
-
-// ─── Tab icon helper ─────────────────────────────────────────────────────────
-
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return (
-    <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>
-  );
-}
-
-// ─── Auth flow ───────────────────────────────────────────────────────────────
-
-function AuthNavigator() {
-  return (
-    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
-      <AuthStack.Screen name="Login"    component={LoginScreen} />
-      <AuthStack.Screen name="Register" component={RegisterScreen} />
-    </AuthStack.Navigator>
-  );
-}
-
-// ─── Main tabs ────────────────────────────────────────────────────────────────
+const Root = createNativeStackNavigator<RootStackParamList>();
+const Tab  = createBottomTabNavigator<MainTabParamList>();
 
 function MainTabs() {
-  const { isSeller } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#111827',
-          borderTopColor: '#1f2937',
-          height: 60,
-          paddingBottom: 8,
-        },
-        tabBarActiveTintColor: '#d97706',
-        tabBarInactiveTintColor: '#6b7280',
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
-      }}
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <CustomTabBar {...props} />}
     >
+      <Tab.Screen name="Home">
+        {() => <TabWebView url={WEB_PAGES.HOME} />}
+      </Tab.Screen>
+      <Tab.Screen name="Search">
+        {() => <TabWebView url={WEB_PAGES.PRODUCTS} />}
+      </Tab.Screen>
+
+      {/* Protected tabs — intercept tabPress jika belum login */}
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          title: 'Beranda',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
-        }}
-      />
+        name="Cart"
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            if (!isAuthenticated) {
+              e.preventDefault();
+              navigation.getParent()?.navigate('Login' as never, { redirect: WEB_PAGES.CART } as never);
+            }
+          },
+        })}
+      >
+        {() => <TabWebView url={WEB_PAGES.CART} protected />}
+      </Tab.Screen>
       <Tab.Screen
         name="Orders"
-        component={OrdersScreen}
-        options={{
-          title: 'Pesanan',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📦" focused={focused} />,
-        }}
-      />
-      {isSeller && (
-        <Tab.Screen
-          name="Upload"
-          component={UploadScreen}
-          options={{
-            title: 'Upload',
-            tabBarIcon: ({ focused }) => <TabIcon emoji="📷" focused={focused} />,
-          }}
-        />
-      )}
-      {isSeller && (
-        <Tab.Screen
-          name="Studio"
-          component={StudioScreen}
-          options={{
-            title: 'Studio',
-            tabBarIcon: ({ focused }) => <TabIcon emoji="🏪" focused={focused} />,
-          }}
-        />
-      )}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            if (!isAuthenticated) {
+              e.preventDefault();
+              navigation.getParent()?.navigate('Login' as never, { redirect: WEB_PAGES.ORDERS } as never);
+            }
+          },
+        })}
+      >
+        {() => <TabWebView url={WEB_PAGES.ORDERS} protected />}
+      </Tab.Screen>
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="👤" focused={focused} />,
-        }}
-      />
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            if (!isAuthenticated) {
+              e.preventDefault();
+              navigation.getParent()?.navigate('Login' as never, { redirect: WEB_PAGES.PROFILE } as never);
+            }
+          },
+        })}
+      >
+        {() => <TabWebView url={WEB_PAGES.PROFILE} protected />}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 }
 
-// ─── Root navigator ───────────────────────────────────────────────────────────
-
 function RootNavigator() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return (
       <View style={styles.splash}>
-        <Text style={styles.splashBrand}>MAJA<Text style={{ color: '#d97706' }}>CRAFT</Text></Text>
+        <Text style={styles.splashBrand}>
+          MAJA<Text style={{ color: '#d97706' }}>CRAFT</Text>
+        </Text>
         <ActivityIndicator color="#d97706" style={{ marginTop: 24 }} />
       </View>
     );
@@ -122,12 +90,22 @@ function RootNavigator() {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainTabs /> : <AuthNavigator />}
+      <Root.Navigator screenOptions={{ headerShown: false }}>
+        <Root.Screen name="Tabs" component={MainTabs} />
+        <Root.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+        <Root.Screen
+          name="Register"
+          component={RegisterScreen}
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+      </Root.Navigator>
     </NavigationContainer>
   );
 }
-
-// ─── App entry ────────────────────────────────────────────────────────────────
 
 export default function AppNavigator() {
   return (
@@ -144,6 +122,7 @@ const styles = StyleSheet.create({
   },
   splashBrand: {
     fontSize: 36, fontWeight: '800',
-    color: '#f5f5f0', letterSpacing: 4,
+    color: '#f5f5f0', letterSpacing: 6,
   },
 });
+

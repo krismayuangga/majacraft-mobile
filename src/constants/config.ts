@@ -1,29 +1,28 @@
 /**
  * MajaCraft Mobile — API Configuration
  *
- * Android Emulator: 10.0.2.2 maps to host machine localhost
- * iOS Simulator:    127.0.0.1 / localhost
- * Physical Device:  gunakan IP LAN host machine (misal 192.168.x.x:3030)
+ * Untuk ganti ke local dev server:
+ *   Android Emulator: http://10.0.2.2:3030
+ *   iOS Simulator:    http://localhost:3030
+ *   Physical Device:  http://<IP_LAN>:3030
  */
 
-const DEV_HOST_ANDROID = 'http://10.0.2.2:3030';
-const DEV_HOST_IOS     = 'http://localhost:3030';
-const PROD_URL         = 'https://majacraft.id';
+const PROD_URL = 'https://majacraft.id';
 
-import { Platform } from 'react-native';
+// Uncomment baris di bawah untuk development lokal:
+// const DEV_HOST = 'http://10.0.2.2:3030'; // Android emulator
 
-export const API_BASE_URL = __DEV__
-  ? Platform.OS === 'android' ? DEV_HOST_ANDROID : DEV_HOST_IOS
-  : PROD_URL;
+export const API_BASE_URL = PROD_URL;
 
-export const WEB_BASE_URL = __DEV__ ? API_BASE_URL : PROD_URL;
+export const WEB_BASE_URL = PROD_URL;
 
 export const API_ENDPOINTS = {
   // ─── Auth (mobile JWT) ──────────────────────────────────────────────────
   LOGIN:          '/api/auth/mobile/login',
   REGISTER:       '/api/auth/mobile/register',
   ME:             '/api/auth/mobile/me',
-  WEBVIEW_TOKEN:  '/api/auth/mobile/webview-token', // JWT → WebView session cookie
+  GOOGLE_LOGIN:   '/api/auth/mobile/google',          // Google ID token → JWT
+  WEBVIEW_TOKEN:  '/api/auth/mobile/webview-token',   // JWT → WebView session cookie
 
   // ─── User ────────────────────────────────────────────────────────────────
   PROFILE:        '/api/users/me',

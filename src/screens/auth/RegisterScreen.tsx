@@ -9,9 +9,9 @@ import { useAuth } from '../../lib/AuthContext';
 import api from '../../lib/api';
 import { API_ENDPOINTS } from '../../constants/config';
 import { AuthResponse } from '../../types';
-import { AuthStackParamList } from '../../navigation/types';
+import { RootStackParamList } from '../../navigation/types';
 
-type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Register'> };
+type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'Register'> };
 
 export default function RegisterScreen({ navigation }: Props) {
   const { login } = useAuth();
@@ -41,6 +41,7 @@ export default function RegisterScreen({ navigation }: Props) {
       });
       if (res.data?.token && res.data?.user) {
         await login(res.data.token, res.data.user);
+        navigation.goBack();
       } else {
         Alert.alert('Gagal', res.message ?? 'Registrasi gagal');
       }
@@ -57,6 +58,11 @@ export default function RegisterScreen({ navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        {/* Tombol tutup modal */}
+        <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()}>
+          <Text style={styles.closeText}>✕</Text>
+        </TouchableOpacity>
+
         <View style={styles.header}>
           <Text style={styles.brand}>MAJA<Text style={styles.brandAccent}>CRAFT</Text></Text>
           <Text style={styles.subtitle}>Buat akun baru</Text>
@@ -96,7 +102,7 @@ export default function RegisterScreen({ navigation }: Props) {
             }
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.link}>
+          <TouchableOpacity onPress={() => navigation.replace('Login')} style={styles.link}>
             <Text style={styles.linkText}>
               Sudah punya akun? <Text style={styles.linkAccent}>Masuk</Text>
             </Text>
@@ -109,7 +115,9 @@ export default function RegisterScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   flex:        { flex: 1, backgroundColor: '#0f0f0f' },
-  container:   { flexGrow: 1, justifyContent: 'center', padding: 24 },
+  container:   { flexGrow: 1, justifyContent: 'center', padding: 24, paddingTop: 60 },
+  closeBtn:    { position: 'absolute', top: 16, right: 16, padding: 8 },
+  closeText:   { color: '#6b7280', fontSize: 20, fontWeight: '600' },
   header:      { alignItems: 'center', marginBottom: 32 },
   brand:       { fontSize: 28, fontWeight: '800', color: '#f5f5f0', letterSpacing: 4 },
   brandAccent: { color: '#d97706' },

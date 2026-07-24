@@ -6,15 +6,15 @@ import {
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { launchImageLibrary, launchCamera, Asset } from 'react-native-image-picker';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
 import api from '../../lib/api';
 import { API_ENDPOINTS } from '../../constants/config';
 import { Category } from '../../types';
-import { MainTabParamList } from '../../navigation/types';
 
-type Props = { navigation: BottomTabNavigationProp<MainTabParamList, 'Upload'> };
+type Props = Record<string, never>;
 
-export default function UploadScreen({ navigation }: Props) {
+export default function UploadScreen() {
+  const navigation = useNavigation();
   const [images,   setImages]   = useState<Asset[]>([]);
   const [name,     setName]     = useState('');
   const [desc,     setDesc]     = useState('');
@@ -81,7 +81,7 @@ export default function UploadScreen({ navigation }: Props) {
 
       if (res.data) {
         Alert.alert('Berhasil', 'Produk berhasil diupload! Menunggu moderasi admin.', [
-          { text: 'OK', onPress: () => navigation.navigate('Studio' as any) },
+          { text: 'OK', onPress: () => (navigation as any).navigate('Profile') },
         ]);
         // Reset form
         setImages([]); setName(''); setDesc(''); setPrice('');
