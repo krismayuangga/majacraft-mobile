@@ -1,53 +1,111 @@
-# MajaCraft Mobile — Quickstart (Pure React Native CLI)
+# MajaCraft Mobile — Quickstart (Flutter)
 
 ## Prerequisites
 
 | Tool | Version | Link |
 |------|---------|------|
-| Node.js | 18+ | https://nodejs.org |
-| JDK | 17 | https://adoptium.net |
+| Flutter | 3.32.6+ | https://flutter.dev/docs/get-started/install |
+| Dart SDK | 3.8.1+ | (included with Flutter) |
 | Android Studio | latest | https://developer.android.com/studio |
-| React Native CLI | latest | `npm install -g react-native-cli` |
+| Android SDK | 33+ | (via Android Studio) |
 
 ---
 
-## 1. Setup Android Studio
+## 1. Setup Flutter SDK
 
-Buka Android Studio → SDK Manager → install:
-- Android SDK Platform 34
-- Android SDK Build-Tools
-- Android Emulator
-- Android SDK Platform-Tools
-
-Set environment variables:
+### Windows
 ```bash
-# Windows
+# Download Flutter SDK
+# https://docs.flutter.dev/get-started/install/windows
+
+# Extract to C:\src\flutter
+# Add to PATH: C:\src\flutter\bin
+
+# Verify installation
+flutter doctor
+```
+
+### macOS
+```bash
+# Download Flutter SDK
+# https://docs.flutter.dev/get-started/install/macos
+
+# Extract to ~/flutter
+# Add to ~/.zshrc:
+export PATH="$PATH:$HOME/flutter/bin"
+
+# Verify installation
+flutter doctor
+```
+
+### Linux
+```bash
+# Download Flutter SDK
+# https://docs.flutter.dev/get-started/install/linux
+
+# Extract to ~/flutter
+# Add to ~/.bashrc:
+export PATH="$PATH:$HOME/flutter/bin"
+
+# Verify installation
+flutter doctor
+```
+
+---
+
+## 2. Setup Android Studio
+
+1. Open Android Studio → SDK Manager → Install:
+   - ✅ Android SDK Platform 33 (Android 13)
+   - ✅ Android SDK Platform 34 (Android 14)
+   - ✅ Android SDK Build-Tools
+   - ✅ Android Emulator
+   - ✅ Android SDK Platform-Tools
+
+2. Set environment variables:
+
+**Windows:**
+```bash
 ANDROID_HOME = C:\Users\<user>\AppData\Local\Android\Sdk
-# tambahkan ke PATH: %ANDROID_HOME%\platform-tools, %ANDROID_HOME%\emulator
+# Add to PATH:
+# %ANDROID_HOME%\platform-tools
+# %ANDROID_HOME%\emulator
+```
 
-# macOS / Linux (~/.bashrc atau ~/.zshrc)
-export ANDROID_HOME=$HOME/Android/Sdk
-export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+**macOS/Linux:**
+```bash
+export ANDROID_HOME=$HOME/Library/Android/sdk  # macOS
+export ANDROID_HOME=$HOME/Android/Sdk          # Linux
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+export PATH=$PATH:$ANDROID_HOME/emulator
+```
+
+3. Accept Android licenses:
+```bash
+flutter doctor --android-licenses
 ```
 
 ---
 
-## 2. Init Project React Native
+## 3. Clone & Run Project
 
 ```bash
-# Inisialisasi project RN CLI baru (hanya sekali)
-npx react-native@0.78.2 init MajaCraftMobile \
-  --template react-native-template-typescript \
-  --version 0.78.2
+# 1. Clone repository
+git clone https://github.com/krismayuangga/majacraft-mobile.git
+cd majacraft-mobile
 
-# Masuk ke folder
-cd MajaCraftMobile
+# 2. Install dependencies
+flutter pub get
 
-# Copy seluruh konten src/ dari repo ini
-# ATAU clone langsung dari repo ini ke folder tersebut
+# 3. Check connected devices
+flutter devices
+
+# 4. Run on Android emulator/device
+flutter run
+
+# Or run with specific device
+flutter run -d <device-id>
 ```
-
-Jika clone dari repo ini:
 ```bash
 git clone <repo-url> majacraft-mobile-source
 # Salin src/, App.tsx, package.json, index.js, babel.config.js, tsconfig.json
