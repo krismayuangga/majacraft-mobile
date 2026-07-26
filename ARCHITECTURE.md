@@ -3,26 +3,23 @@
 ## System Architecture
 
 ### Overview
-MajaCraft Mobile adalah React Native app yang dibangun dengan Expo SDK 54, menggunakan file-based routing (Expo Router) dan TypeScript untuk type safety.
+MajaCraft Mobile adalah Flutter application yang menggunakan Provider pattern untuk state management, clean architecture dengan separation of concerns (screens, services, models), dan Material Design 3 untuk UI/UX.
 
 ---
 
 ## 🎯 Tech Stack
 
 ### Core
-- **Framework:** Expo SDK 54.0.0
-- **React:** 19.1.0
-- **React Native:** 0.81.5
-- **Language:** TypeScript 5.9.2
-- **Navigation:** Expo Router 6.0.24
+- **Framework:** Flutter 3.32.6 (stable)
+- **Language:** Dart SDK 3.8.1
+- **State Management:** Provider 6.1.1
+- **UI:** Material Design 3
 
-### Key Libraries
-- **HTTP:** axios 1.7.9
-- **Storage:** @react-native-async-storage/async-storage 2.2.0
-- **WebView:** react-native-webview 13.15.0
-- **Camera:** expo-camera 17.0.0
-- **Image Picker:** expo-image-picker 17.0.11
-- **Notifications:** expo-notifications 0.32.17
+### Key Packages
+- **HTTP Client:** http 1.2.0, http_parser 4.0.2
+- **Image Picker:** image_picker 1.0.7
+- **Storage:** Shared Preferences (for local storage)
+- **Navigation:** Flutter Navigator 2.0 (built-in)
 
 ---
 
@@ -30,44 +27,58 @@ MajaCraft Mobile adalah React Native app yang dibangun dengan Expo SDK 54, mengg
 
 ```
 majacraft-mobile/
-├── app/                          # Expo Router - file-based routing
-│   ├── _layout.tsx              # Root layout (AuthProvider wrapper)
-│   ├── index.tsx                # Entry point (redirects to login/tabs)
+├── lib/
+│   ├── main.dart                         # App entry point, runApp()
 │   │
-│   ├── (auth)/                  # Auth route group
-│   │   ├── _layout.tsx          # Auth layout (Stack navigator)
-│   │   ├── login.tsx            # Login screen
-│   │   └── register.tsx         # Register screen
+│   ├── config/                           # Configuration
+│   │   └── api_config.dart              # API base URL, constants
 │   │
-│   └── (tabs)/                  # Tabs route group (main app)
-│       ├── _layout.tsx          # Tab layout (Bottom tabs)
-│       ├── index.tsx            # Home (WebView to main site)
-│       ├── upload.tsx           # Upload product screen
-│       ├── products.tsx         # Seller products list
-│       ├── orders.tsx           # Order management
-│       └── profile.tsx          # User profile
+│   ├── providers/                        # State management
+│   │   └── auth_provider.dart           # Authentication state (ChangeNotifier)
+│   │
+│   ├── services/                         # Business logic & API calls
+│   │   ├── api_service.dart             # HTTP client wrapper
+│   │   ├── auth_service.dart            # Auth API (login, register)
+│   │   ├── region_service.dart          # Region cascade API
+│   │   ├── postal_code_service.dart     # Postal code lookup
+│   │   └── upload_service.dart          # Image upload multipart
+│   │
+│   ├── models/                           # Data models
+│   │   ├── user.dart                    # User model with fromJson
+│   │   ├── store.dart                   # Store model
+│   │   └── region.dart                  # Province, Regency, District, Village
+│   │
+│   ├── data/                             # Static data
+│   │   └── bank_list.dart               # 102+ Indonesia banks list
+│   │
+│   ├── screens/                          # UI screens
+│   │   ├── auth/
+│   │   │   ├── login_screen.dart        # Login page
+│   │   │   └── register_screen.dart     # Register page
+│   │   │
+│   │   ├── buyer/
+│   │   │   └── home_screen.dart         # Buyer dashboard (coming soon)
+│   │   │
+│   │   ├── seller/
+│   │   │   └── studio_screen.dart       # Studio Seniman (5 tabs)
+│   │   │       ├── studio_ringkasan_tab.dart      # Home/overview
+│   │   │       ├── studio_karya_tab.dart          # Products
+│   │   │       ├── studio_pesanan_tab.dart        # Orders
+│   │   │       ├── studio_saldo_tab.dart          # Balance
+│   │   │       └── studio_pengaturan_tab.dart     # Settings
+│   │   │
+│   │   └── shared/
+│   │       ├── address_form_screen.dart # Address management
+│   │       └── add_address_screen.dart  # Add new address
+│   │
+│   └── widgets/                          # Reusable components
+│       └── (custom widgets)
 │
-├── lib/                          # Business logic & utilities
-│   ├── AuthContext.tsx          # Global auth state (Context API)
-│   ├── auth.ts                  # AsyncStorage auth helpers
-│   └── api.ts                   # Axios instance with interceptors
-│
-├── constants/                    # Configuration constants
-│   └── config.ts                # API URLs, endpoints
-│
-├── types/                        # TypeScript type definitions
-│   └── index.ts                 # User, Product, Order interfaces
-│
-├── assets/                       # Static assets
-│   ├── icon.png                 # App icon
-│   ├── splash-icon.png          # Splash screen (removed for now)
-│   └── android-icon-*.png       # Adaptive icons
-│
-├── app.json                      # Expo app configuration
-├── eas.json                      # EAS Build profiles
-├── package.json                  # Dependencies
-├── tsconfig.json                 # TypeScript config
-└── babel.config.js               # Babel config
+├── android/                              # Android native project
+├── ios/                                  # iOS native project
+├── assets/                               # Static assets
+├── pubspec.yaml                          # Dependencies & config
+└── test/                                 # Unit & widget tests
 ```
 
 ---
@@ -77,127 +88,433 @@ majacraft-mobile/
 ### Authentication Flow
 
 ```
-App Start
+App Start (main.dart)
   ↓
-_layout.tsx (AuthProvider)
+runApp(
+  MultiProvider(
+    providers: [AuthProvider],
+    child: MyApp()
+  )
+)
   ↓
-AuthContext.loadUserData()
+MyApp → MaterialApp
   ↓
-AsyncStorage.getItem('token')
+AuthProvider.loadUserData()
+  ↓
+Shared Preferences → get('token')
   ↓
 [Token exists?]
-  ├─ Yes → Set user state → isAuthenticated = true
+  ├─ Yes → Validate token → Set user → isAuthenticated = true
   └─ No  → user = null → isAuthenticated = false
   ↓
-index.tsx checks isAuthenticated
-  ├─ true  → Redirect to /(tabs)
-  └─ false → Redirect to /(auth)/login
+Consumer<AuthProvider> checks isAuthenticated
+  ├─ true  → Navigate to HomeScreen or StudioScreen (by role)
+  └─ false → Navigate to LoginScreen
 ```
 
 ### Login Flow
 
 ```
-User enters email/password in login.tsx
+User enters email/password in LoginScreen
   ↓
-POST /api/auth/mobile/login
+AuthProvider.login(email, password)
+  ↓
+AuthService.login(email, password)
+  ↓
+POST https://majacraft.id/api/auth/mobile/login
   ↓
 Backend validates credentials
   ↓
 [Success?]
-  ├─ Yes → Return { token, user }
+  ├─ Yes → Return { success: true, data: { token, user } }
   │         ↓
-  │       AuthContext.login(token, user)
+  │       AuthProvider stores token + user
   │         ↓
-  │       AsyncStorage.setItem('token')
-  │       AsyncStorage.setItem('user_data')
+  │       Shared Preferences.setString('token', token)
+  │       Shared Preferences.setString('user_data', json)
   │         ↓
-  │       router.replace('/(tabs)')
+  │       notifyListeners()
+  │         ↓
+  │       Navigator.pushReplacement() to StudioScreen
   │
-  └─ No  → Show error message
+  └─ No  → Return { success: false, error: message }
+           ↓
+         Show error SnackBar
 ```
 
 ### API Request Flow
 
 ```
-Component calls API function
+Screen calls Service method
   ↓
-api.ts (Axios instance)
+Service → ApiService.get/post/patch()
   ↓
-Request Interceptor
-  ├─ Get token from AsyncStorage
-  ├─ Add Authorization header
+ApiService builds http.Request
+  ├─ Get token from AuthProvider
+  ├─ Add Authorization: Bearer <token>
+  ├─ Add Content-Type: application/json
   └─ Send request
   ↓
 Backend processes request
   ↓
-Response Interceptor
-  ├─ Success → Return data
-  └─ 401 Error → Logout user
+Response handling
+  ├─ 200-299 → Parse JSON → Return data
+  ├─ 401 → Call AuthProvider.logout() → Navigate to Login
+  └─ Other → Throw ApiException with message
+```
+
+### Studio Settings Data Flow (Example)
+
+```
+StudioPengaturanTab.initState()
+  ↓
+_initializeData()
+  ├─ _loadProvinces() [with static cache, 5-min TTL]
+  │   ↓
+  │   RegionService.getProvinces()
+  │   ↓
+  │   GET https://emsifa.com/api-wilayah-indonesia/api/provinces.json
+  │   ↓
+  │   Parse List<Province> → Cache → setState()
+  │
+  └─ _loadStoreData()
+      ↓
+      ApiService.get('/api/studio/store')
+      ↓
+      Parse Store model
+      ↓
+      Restore selections (province, regency, district, village)
+      ↓
+      setState() → UI updates
+      
+User changes village
+  ↓
+_onVillageSelected(Village)
+  ├─ _autoFillPostalCode()
+  │   ↓
+  │   PostalCodeService.searchByPlace(village.name + district.name)
+  │   ↓
+  │   GET https://kodepos.vercel.app/search
+  │   ↓
+  │   Parse postal code → Set _postalCodeController.text
+  │
+  └─ setState() → UI updates postal code field
+
+User saves settings
+  ↓
+_saveInfoToko()
+  ↓
+ApiService.patch('/api/studio/store', body: {...})
+  ↓
+Backend updates database
+  ↓
+[Success?]
+  ├─ Yes → Invalidate cache → Show success SnackBar
+  └─ No  → Show error SnackBar
 ```
 
 ---
 
-## 🧩 Component Architecture
+## 🧩 Architecture Patterns
 
-### AuthContext Pattern
+### Provider Pattern (State Management)
 
-**Purpose:** Global authentication state management
+**Purpose:** Global state management for authentication and user data
 
-**Location:** `lib/AuthContext.tsx`
+**Implementation:**
+```dart
+// 1. Define ChangeNotifier
+class AuthProvider with ChangeNotifier {
+  User? _user;
+  String? _token;
+  bool _isLoading = true;
 
-**Provides:**
-```typescript
-{
-  user: User | null,
-  isLoading: boolean,
-  isAuthenticated: boolean,
-  login: (token, user) => Promise<void>,
-  logout: () => Promise<void>,
-  updateUser: (user) => Promise<void>
+  User? get user => _user;
+  bool get isAuthenticated => _user != null && _token != null;
+  
+  Future<void> login(String email, String password) async {
+    // API call
+    // Store token + user
+    notifyListeners(); // Trigger rebuild
+  }
+  
+  Future<void> logout() async {
+    _user = null;
+    _token = null;
+    // Clear storage
+    notifyListeners();
+  }
 }
+
+// 2. Provide at app root
+MultiProvider(
+  providers: [
+    ChangeNotifierProvider(create: (_) => AuthProvider()),
+  ],
+  child: MyApp(),
+)
+
+// 3. Consume in widgets
+Consumer<AuthProvider>(
+  builder: (context, authProvider, child) {
+    if (!authProvider.isAuthenticated) {
+      return LoginScreen();
+    }
+    return HomeScreen();
+  },
+)
+
+// or
+final authProvider = Provider.of<AuthProvider>(context);
 ```
 
-**Usage:**
-```typescript
-import { useAuth } from '../lib/AuthContext';
+### Service Layer Pattern
 
-const { user, isAuthenticated, logout } = useAuth();
-```
-
-### Screen Components Pattern
+**Purpose:** Separate business logic from UI, reusable API calls
 
 **Structure:**
-```typescript
-// 1. Imports
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useAuth } from '../lib/AuthContext';
+```dart
+class ApiService {
+  final String baseUrl;
+  final AuthProvider authProvider;
+  
+  Future<Map<String, dynamic>> get(String endpoint) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: {
+        'Authorization': 'Bearer ${authProvider.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+    return _handleResponse(response);
+  }
+  
+  Map<String, dynamic> _handleResponse(http.Response response) {
+    if (response.statusCode == 401) {
+      authProvider.logout();
+      throw ApiException('Unauthorized');
+    }
+    // ... handle other cases
+  }
+}
+```
 
-// 2. Component
-export default function ScreenName() {
-  // State
-  const [data, setData] = useState([]);
-  const { user } = useAuth();
+### Model Pattern
+
+**Purpose:** Type-safe data structures with JSON serialization
+
+**Implementation:**
+```dart
+class User {
+  final String id;
+  final String name;
+  final String email;
+  final String role;
+  final String? kycStatus;
   
-  // Effects
-  useEffect(() => {
-    loadData();
-  }, []);
+  User({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.role,
+    this.kycStatus,
+  });
   
-  // Handlers
-  const loadData = async () => {
-    // fetch data
-  };
+  // JSON deserialization
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      role: json['role'] ?? 'BUYER',
+      kycStatus: json['kycStatus'],
+    );
+  }
   
-  // Render
-  return (
-    <View style={styles.container}>
-      {/* UI */}
-    </View>
-  );
+  // JSON serialization
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'role': role,
+      'kycStatus': kycStatus,
+    };
+  }
+}
+```
+
+### StatefulWidget with AutomaticKeepAliveClientMixin
+
+**Purpose:** Prevent tab reload, maintain state when switching tabs
+
+**Implementation:**
+```dart
+class StudioPengaturanTab extends StatefulWidget {
+  @override
+  State<StudioPengaturanTab> createState() => _StudioPengaturanTabState();
 }
 
-// 3. Styles
+class _StudioPengaturanTabState extends State<StudioPengaturanTab>
+    with AutomaticKeepAliveClientMixin {
+  
+  @override
+  bool get wantKeepAlive => true; // Keep state alive
+  
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // REQUIRED for keep alive
+    return Scaffold(/* ... */);
+  }
+}
+```
+
+### Static Cache Pattern
+
+**Purpose:** Reduce API calls, improve performance
+
+**Implementation:**
+```dart
+class _StudioPengaturanTabState extends State<StudioPengaturanTab> {
+  // Static cache shared across instances
+  static List<Province>? _cachedProvinces;
+  static Store? _cachedStore;
+  static DateTime? _cacheTime;
+  static const _cacheDuration = Duration(minutes: 5);
+  
+  Future<void> _loadProvinces() async {
+    // Check cache validity
+    if (_cachedProvinces != null && 
+        _cacheTime != null &&
+        DateTime.now().difference(_cacheTime!) < _cacheDuration) {
+      setState(() {
+        _provinces = _cachedProvinces!;
+      });
+      return;
+    }
+    
+    // Fetch from API
+    _provinces = await _regionService.getProvinces();
+    
+    // Update cache
+    _cachedProvinces = _provinces;
+    _cacheTime = DateTime.now();
+    
+    setState(() {});
+  }
+  
+  void _invalidateCache() {
+    _cachedProvinces = null;
+    _cachedStore = null;
+    _cacheTime = null;
+  }
+}
+```
+
+---
+
+## 🔐 Security
+
+### Token Management
+- JWT tokens stored in Shared Preferences (secure on device)
+- Token sent in Authorization header: `Bearer <token>`
+- 401 response triggers automatic logout
+- Token expiry: 7 days (backend-managed)
+
+### API Communication
+- HTTPS only (https://majacraft.id)
+- No sensitive data in logs
+- Error messages sanitized for user display
+
+---
+
+## 📊 Performance Optimizations
+
+### 1. Static Caching
+- Province list cached for 5 minutes
+- Store data cached to reduce API calls
+- Cache invalidated on save operations
+
+### 2. Keep Alive Tabs
+- `AutomaticKeepAliveClientMixin` prevents tab reload
+- State preserved when switching between tabs
+- Reduces unnecessary API calls
+
+### 3. Async Operations
+- Sequential await for dependent operations
+- Parallel processing where possible
+- Loading states to prevent multiple requests
+
+### 4. Image Optimization
+- Images loaded with error handlers
+- Network images cached automatically by Flutter
+- Base URL concatenation for relative paths
+
+---
+
+## 🧪 Testing Strategy
+
+### Unit Tests
+- Test models (fromJson, toJson)
+- Test services (API calls, error handling)
+- Test utility functions
+
+### Widget Tests
+- Test screen rendering
+- Test user interactions
+- Test navigation flows
+
+### Integration Tests
+- Test complete user flows
+- Test API integration
+- Test state management
+
+---
+
+## 📦 Build & Deployment
+
+### Debug Build
+```bash
+flutter build apk --debug
+```
+
+### Release Build
+```bash
+flutter build apk --release
+flutter build appbundle --release  # For Play Store
+```
+
+### Signing Configuration
+Located in `android/app/build.gradle`:
+- Debug signing (auto-generated)
+- Release signing (requires keystore setup)
+
+---
+
+## 🔄 Future Enhancements
+
+### Planned Features
+- [ ] Buyer product catalog & search
+- [ ] Product detail pages
+- [ ] Shopping cart & checkout
+- [ ] Order tracking
+- [ ] Chat/messaging
+- [ ] Push notifications
+- [ ] iOS support
+
+### Technical Improvements
+- [ ] Offline mode with local database (sqflite)
+- [ ] Image caching optimization
+- [ ] Pagination for large lists
+- [ ] Background sync
+- [ ] Analytics integration
+- [ ] Crash reporting (Sentry/Firebase Crashlytics)
+
+---
+
+**Last Updated:** 2026-07-27  
+**Architecture Version:** 2.0 (Flutter)  
+**Flutter SDK:** 3.32.6 (stable)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
