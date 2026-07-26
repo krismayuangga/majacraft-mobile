@@ -1,0 +1,124 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
+import 'providers/wishlist_provider.dart';
+import 'widgets/main_screen.dart';
+
+void main() async {
+  // Ensure Flutter bindings are initialized before any async operations
+  WidgetsFlutterBinding.ensureInitialized();
+
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => WishlistProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Majacraft',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
+        ),
+        home: const AppInitializer(),
+      ),
+    );
+  }
+}
+
+class AppInitializer extends StatefulWidget {
+  const AppInitializer({super.key});
+
+  @override
+  State<AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends State<AppInitializer> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize auth state and load user data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeApp();
+    });
+  }
+
+  Future<void> _initializeApp() async {
+    final authProvider = context.read<AuthProvider>();
+    final wishlistProvider = context.read<WishlistProvider>();
+
+    // Initialize auth (check if user is logged in)
+    await authProvider.initialize();
+
+    // If user is authenticated, load wishlist
+    if (authProvider.isAuthenticated && authProvider.token != null) {
+      try {
+        await wishlistProvider.loadWishlists(authProvider.token!);
+      } catch (e) {
+        print('[AppInitializer] Error loading wishlist: $e');
+        // Don't block app if wishlist fails to load
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        // Show loading while checking auth state
+        if (authProvider.isLoading) {
+          return const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Memuat aplikasi...'),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Show error if initialization failed
+        if (authProvider.error != null) {
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text(
+                    'Error: ${authProvider.error}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<AuthProvider>().initialize();
+                    },
+                    child: Text('Coba Lagi'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Show main screen
+        return MainScreen();
+      },
+    );
+  }
+}
