@@ -1009,9 +1009,9 @@ class _TentangScreen extends StatelessWidget {
   static const _baseUrl = 'https://majacraft.id';
 
   static const _layanan = [
-    {'title': 'Cara Berbelanja', 'url': '$_baseUrl/cara-berbelanja'},
-    {'title': 'Cara Berjualan', 'url': '$_baseUrl/cara-berjualan'},
-    {'title': 'Sertifikat Phygital', 'url': '$_baseUrl/phygital'},
+    {'title': 'Cara Berbelanja', 'url': '$_baseUrl/bantuan/belanja'},
+    {'title': 'Cara Berjualan', 'url': '$_baseUrl/bantuan/jual'},
+    {'title': 'Sertifikat Phygital', 'url': '$_baseUrl/jaminan'},
     {'title': 'Ruang Budaya', 'url': '$_baseUrl/ruang-budaya'},
     {'title': 'Program Seniman', 'url': '$_baseUrl/program-seniman'},
     {'title': 'Pusat Bantuan', 'url': '$_baseUrl/bantuan'},
@@ -1019,11 +1019,11 @@ class _TentangScreen extends StatelessWidget {
 
   static const _informasi = [
     {'title': 'Tentang MajaCraft', 'url': '$_baseUrl/tentang'},
-    {'title': 'Kebijakan Privasi', 'url': '$_baseUrl/kebijakan-privasi'},
-    {'title': 'Syarat & Ketentuan', 'url': '$_baseUrl/syarat-ketentuan'},
-    {'title': 'Keamanan Transaksi', 'url': '$_baseUrl/keamanan-transaksi'},
+    {'title': 'Kebijakan Privasi', 'url': '$_baseUrl/privasi'},
+    {'title': 'Syarat & Ketentuan', 'url': '$_baseUrl/syarat'},
+    {'title': 'Keamanan Transaksi', 'url': '$_baseUrl/keamanan'},
     {'title': 'Karir', 'url': '$_baseUrl/karir'},
-    {'title': 'Hubungi Kami', 'url': '$_baseUrl/hubungi-kami'},
+    {'title': 'Hubungi Kami', 'url': '$_baseUrl/kontak'},
   ];
 
   void _openPage(BuildContext context, String title, String url) {
