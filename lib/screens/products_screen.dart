@@ -45,6 +45,12 @@ class ProductsScreenState extends State<ProductsScreen> {
   void initState() {
     super.initState();
 
+    // Load produk saat pertama kali tab Cari dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProducts(refresh: true);
+      _loadCategories();
+    });
+
     // Auto focus search if requested
     if (widget.autoFocusSearch) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

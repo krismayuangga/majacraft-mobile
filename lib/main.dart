@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
       ],
       child: MaterialApp(
-        title: 'Majacraft',
+        title: 'MajaCraft',
         debugShowCheckedModeBanner: false,
         navigatorKey: navigatorKey, // Global key untuk navigasi notifikasi
         theme: ThemeData(
