@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'onboarding_screen.dart';
 import '../providers/auth_provider.dart';
 import '../providers/wishlist_provider.dart';
 import '../widgets/main_screen.dart';
+import '../services/fcm_service.dart';
+import '../main.dart' show navigatorKey, firebaseMessagingBackgroundHandler;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -52,10 +56,33 @@ class _SplashScreenState extends State<SplashScreen>
       curve: const Interval(0.4, 0.9, curve: Curves.easeOut),
     );
 
-    _controller.forward().then((_) {
-      // Hold for a moment then navigate
-      Future.delayed(const Duration(milliseconds: 900), _navigate);
-    });
+    // Jalankan animasi + Firebase init BERSAMAAN (parallel)
+    // sehingga splash sudah tampil sambil Firebase loading di background
+    _controller.forward();
+    _initFirebaseAndNavigate();
+  }
+
+  Future<void> _initFirebaseAndNavigate() async {
+    // Firebase init & animasi jalan bersamaan
+    // Tunggu keduanya selesai, mana yang lebih lama
+    await Future.wait([
+      _initFirebase(),
+      Future.delayed(
+        const Duration(milliseconds: 2600),
+      ), // durasi animasi + hold
+    ]);
+    _navigate();
+  }
+
+  Future<void> _initFirebase() async {
+    try {
+      await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+      await FCMService().initialize();
+      FCMService.setNavigatorKey(navigatorKey);
+    } catch (_) {
+      // Jika Firebase gagal (mis: no google-services), tetap lanjut ke app
+    }
   }
 
   Future<void> _navigate() async {

@@ -14,18 +14,8 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  await Firebase.initializeApp();
-
-  // Register background message handler BEFORE runApp
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-  // Initialize FCM Service (permissions + token)
-  await FCMService().initialize();
-
-  // Set navigator key for notification navigation
-  FCMService.setNavigatorKey(navigatorKey);
-
+  // Register background handler sebelum runApp (wajib dilakukan di main)
+  // tapi Firebase init dipindah ke SplashScreen agar UI tampil lebih cepat
   runApp(const MyApp());
 }
 
