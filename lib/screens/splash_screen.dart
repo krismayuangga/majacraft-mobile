@@ -98,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen>
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const MainScreen(),
+        pageBuilder: (_, __, ___) => MainScreen(),
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 600),
@@ -115,14 +115,19 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0C0A),
+      backgroundColor: const Color(0xFF0A0908),
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background image
-          Image.asset(
-            'assets/background-splash-dan-card.jpg',
-            fit: BoxFit.cover,
+          // Background image — contain to show corner ornaments
+          Container(
+            color: const Color(0xFF0A0908),
+            child: Center(
+              child: Image.asset(
+                'assets/background-splash-dan-card.jpg',
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
 
           // Dark overlay gradient for depth

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'main_screen.dart';
 
 class CategoryGrid extends StatelessWidget {
@@ -161,30 +162,27 @@ class _CategoryItem extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  category.imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: category.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.brown.shade700,
-                            Colors.brown.shade800,
-                          ],
-                        ),
+                  placeholder: (context, url) =>
+                      Container(color: Colors.brown.shade900),
+                  errorWidget: (context, url, error) => Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Colors.brown.shade700, Colors.brown.shade800],
                       ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: Colors.white54,
-                          size: 24,
-                        ),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Colors.white54,
+                        size: 24,
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
             ),

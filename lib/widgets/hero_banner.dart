@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../screens/ruang_budaya_screen.dart';
 import 'main_screen.dart';
 
@@ -159,22 +160,22 @@ class _BannerItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Background image with dark overlay
+        // Background image with caching
         Positioned.fill(
-          child: Image.network(
-            banner.image,
+          child: CachedNetworkImage(
+            imageUrl: banner.image,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Colors.brown.shade900, Colors.brown.shade800],
-                  ),
+            placeholder: (context, url) =>
+                Container(color: const Color(0xFF1C1A14)),
+            errorWidget: (context, url, error) => Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.brown.shade900, Colors.brown.shade800],
                 ),
-              );
-            },
+              ),
+            ),
           ),
         ),
 

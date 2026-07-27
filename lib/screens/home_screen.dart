@@ -45,134 +45,56 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadProducts() async {
     final authProvider = context.read<AuthProvider>();
     final token = authProvider.token;
+    final api = ApiService();
 
-    // Load Featured Products
-    try {
-      final response = await ApiService().get(
-        '/api/products?featured=1&limit=6',
-        token: token,
-      );
+    // ── Semua 4 request jalan BERSAMAAN (parallel), bukan berurutan ──
+    final results = await Future.wait([
+      api
+          .get('/api/products?featured=1&limit=6', token: token)
+          .catchError((_) => <String, dynamic>{}),
+      api
+          .get('/api/products?sort=terbaru&limit=6', token: token)
+          .catchError((_) => <String, dynamic>{}),
+      api
+          .get('/api/products?sertifikat=1&limit=6', token: token)
+          .catchError((_) => <String, dynamic>{}),
+      api
+          .get('/api/products?flashSale=1&limit=20', token: token)
+          .catchError((_) => <String, dynamic>{}),
+    ]);
 
-      if (response['data'] != null && response['data']['items'] != null) {
-        final items = response['data']['items'] as List;
-        setState(() {
-          _featuredProducts = items
-              .map((item) => Product.fromJson(item))
-              .toList();
-          _isLoadingFeatured = false;
-        });
-      } else {
-        setState(() {
-          _isLoadingFeatured = false;
-        });
-      }
-    } catch (e) {
-      print('[Home] Error loading featured products: $e');
-      setState(() {
-        _isLoadingFeatured = false;
-      });
-    }
+    if (!mounted) return;
 
-    // Load New Products
-    try {
-      final response = await ApiService().get(
-        '/api/products?sort=terbaru&limit=6',
-        token: token,
-      );
-
-      if (response['data'] != null && response['data']['items'] != null) {
-        final items = response['data']['items'] as List;
-        setState(() {
-          _newProducts = items.map((item) => Product.fromJson(item)).toList();
-          _isLoadingNew = false;
-        });
-      } else {
-        setState(() {
-          _isLoadingNew = false;
-        });
-      }
-    } catch (e) {
-      print('[Home] Error loading new products: $e');
-      setState(() {
-        _isLoadingNew = false;
-      });
-    }
-
-    // Load Certified Products
-    try {
-      final response = await ApiService().get(
-        '/api/products?sertifikat=1&limit=10',
-        token: token,
-      );
-
-      if (response['data'] != null && response['data']['items'] != null) {
-        final items = response['data']['items'] as List;
-        setState(() {
-          _certifiedProducts = items
-              .map((item) => Product.fromJson(item))
-              .take(6)
-              .toList();
-          _isLoadingCertified = false;
-        });
-      } else {
-        setState(() {
-          _isLoadingCertified = false;
-        });
-      }
-    } catch (e) {
-      print('[Home] Error loading certified products: $e');
-      setState(() {
-        _isLoadingCertified = false;
-      });
-    }
-
-    // Load Flash Sale Products (products with discounts)
-    try {
-      // Try to get flash sale products from API
-      var response = await ApiService().get(
-        '/api/products?flashSale=1&limit=20',
-        token: token,
-      );
-
-      // If no flash sale endpoint, fallback to filtering by discount
-      if (response['data'] == null ||
-          response['data']['items'] == null ||
-          (response['data']['items'] as List).isEmpty) {
-        response = await ApiService().get(
-          '/api/products?limit=50',
-          token: token,
-        );
-      }
-
-      if (response['data'] != null && response['data']['items'] != null) {
-        final items = response['data']['items'] as List;
-        // Filter products with discounts
-        final flashSaleItems = items
+    List<Product> _parse(Map<String, dynamic> response) {
+      try {
+        if (response['data']?['items'] == null) return [];
+        return (response['data']['items'] as List)
             .map((item) => Product.fromJson(item))
-            .where(
-              (product) =>
-                  product.originalPrice != null &&
-                  product.originalPrice! > product.price,
-            )
             .toList();
-
-        print('[Home] Found ${flashSaleItems.length} flash sale products');
-
-        setState(() {
-          _flashSaleProducts = flashSaleItems;
-          _isLoadingFlashSale = false;
-        });
-      } else {
-        setState(() {
-          _isLoadingFlashSale = false;
-        });
+      } catch (_) {
+        return [];
       }
-    } catch (e) {
-      print('[Home] Error loading flash sale products: $e');
-      setState(() {
-        _isLoadingFlashSale = false;
-      });
     }
+
+    final featured = _parse(results[0]);
+    final newest = _parse(results[1]);
+    final certified = _parse(results[2]);
+    final flashSaleRaw = _parse(results[3]);
+    // Filter flash sale: produk yang punya harga asli > harga jual
+    final flashSale = flashSaleRaw
+        .where((p) => p.originalPrice != null && p.originalPrice! > p.price)
+        .toList();
+
+    setState(() {
+      _featuredProducts = featured;
+      _newProducts = newest;
+      _certifiedProducts = certified;
+      _flashSaleProducts = flashSale;
+      _isLoadingFeatured = false;
+      _isLoadingNew = false;
+      _isLoadingCertified = false;
+      _isLoadingFlashSale = false;
+    });
   }
 
   @override

@@ -77,6 +77,9 @@ dependencies:
   # WebView for payment gateway
   webview_flutter: ^4.8.0
 
+  # Image caching — avoids re-downloading banners & categories every time
+  cached_network_image: ^3.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

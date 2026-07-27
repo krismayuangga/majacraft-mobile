@@ -23,9 +23,6 @@ class ApiService {
       final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
       final headers = _getHeaders(token: token);
 
-      print('[API] GET $url');
-      print('[API] Headers: $headers');
-
       final response = await http.get(url, headers: headers);
 
       return _handleResponse(response);
@@ -43,10 +40,6 @@ class ApiService {
     try {
       final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
       final headers = _getHeaders(token: token);
-
-      print('[API] POST $url');
-      print('[API] Headers: $headers');
-      print('[API] Body: ${jsonEncode(body)}');
 
       final response = await http.post(
         url,
@@ -122,27 +115,13 @@ class ApiService {
 
   // Handle response
   Map<String, dynamic> _handleResponse(http.Response response) {
-    print('[API] Status: ${response.statusCode}');
-    print('[API] Content-Type: ${response.headers['content-type']}');
-
-    // Show first 500 chars of body for debugging
-    final bodyPreview = response.body.length > 500
-        ? response.body.substring(0, 500) + '...'
-        : response.body;
-    print('[API] Body preview: $bodyPreview');
-
-    // Try to parse response body first
     if (response.body.isNotEmpty) {
       try {
         final decoded = jsonDecode(response.body);
-        print('[API] Decoded successfully');
 
         // Handle case where response is a Map with success field
         if (decoded is Map<String, dynamic>) {
-          // Check if backend sends success:true even with error status code
-          // This handles inconsistent backend responses
           if (decoded['success'] == true) {
-            print('[API] Response has success:true, treating as success');
             return decoded;
           }
 
