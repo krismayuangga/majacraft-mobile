@@ -6,6 +6,7 @@ import 'providers/auth_provider.dart';
 import 'providers/wishlist_provider.dart';
 import 'widgets/main_screen.dart';
 import 'services/fcm_service.dart';
+import 'screens/splash_screen.dart';
 
 /// Global NavigatorKey untuk navigasi dari notifikasi (background/terminated)
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -46,7 +47,8 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
         ),
-        home: const AppInitializer(),
+        home:
+            const SplashScreen(), // Always start with SplashScreen → Onboarding or AppInitializer
       ),
     );
   }
