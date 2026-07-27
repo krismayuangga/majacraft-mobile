@@ -7,6 +7,7 @@ import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
 import '../screens/notification_list_screen.dart';
 import '../screens/chat_list_screen.dart';
+import 'main_screen.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool showSearch;
@@ -308,81 +309,125 @@ class _CustomAppBarState extends State<CustomAppBar> {
 
               const SizedBox(width: 4),
 
-              // Profile Menu
-              PopupMenuButton<String>(
-                offset: const Offset(0, 50),
-                color: Color(0xFF1C1A15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Color(0xFF362215), width: 1),
-                ),
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Color(0xFF653611),
-                  child: Icon(Icons.person, color: Colors.white, size: 18),
-                ),
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    value: 'account',
-                    child: _buildMenuItem(Icons.person_outline, 'Akun Saya'),
-                  ),
-                  PopupMenuItem(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    value: 'orders',
-                    child: _buildMenuItem(
-                      Icons.receipt_long_outlined,
-                      'Pesanan Saya',
+              // Profile Menu — hanya tampil jika sudah login
+              Consumer<AuthProvider>(
+                builder: (context, auth, _) {
+                  if (!auth.isAuthenticated) return const SizedBox.shrink();
+                  return PopupMenuButton<String>(
+                    offset: const Offset(0, 50),
+                    color: const Color(0xFF1C1A15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(
+                        color: Color(0xFF362215),
+                        width: 1,
+                      ),
                     ),
-                  ),
-                  PopupMenuItem(
-                    height: 1,
-                    padding: EdgeInsets.zero,
-                    enabled: false,
-                    child: Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: Color(0xFF362215),
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: const Color(0xFFB45309),
+                      child: auth.user?.image != null
+                          ? ClipOval(
+                              child: Image.network(
+                                auth.user!.image!,
+                                width: 32,
+                                height: 32,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                     ),
-                  ),
-                  PopupMenuItem(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    value: 'studio',
-                    child: _buildMenuItem(
-                      Icons.store_outlined,
-                      'Studio Seniman',
-                    ),
-                  ),
-                  PopupMenuItem(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    value: 'dashboard',
-                    child: _buildMenuItem(
-                      Icons.dashboard_outlined,
-                      'Dashboard Admin',
-                    ),
-                  ),
-                  PopupMenuItem(
-                    height: 1,
-                    padding: EdgeInsets.zero,
-                    enabled: false,
-                    child: Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: Color(0xFF362215),
-                    ),
-                  ),
-                  PopupMenuItem(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    value: 'logout',
-                    child: _buildMenuItem(
-                      Icons.logout,
-                      'Keluar',
-                      isLogout: true,
-                    ),
-                  ),
-                ],
-                onSelected: (value) {
-                  _handleMenuSelection(context, value);
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        value: 'account',
+                        child: _buildMenuItem(
+                          Icons.person_outline,
+                          'Akun Saya',
+                        ),
+                      ),
+                      PopupMenuItem(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        value: 'orders',
+                        child: _buildMenuItem(
+                          Icons.receipt_long_outlined,
+                          'Pesanan Saya',
+                        ),
+                      ),
+                      PopupMenuItem(
+                        height: 1,
+                        padding: EdgeInsets.zero,
+                        enabled: false,
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: const Color(0xFF362215),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        value: 'studio',
+                        child: _buildMenuItem(
+                          Icons.store_outlined,
+                          'Studio Seniman',
+                        ),
+                      ),
+                      if (auth.user?.role == 'admin') ...[
+                        PopupMenuItem(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          value: 'dashboard',
+                          child: _buildMenuItem(
+                            Icons.dashboard_outlined,
+                            'Dashboard Admin',
+                          ),
+                        ),
+                      ],
+                      PopupMenuItem(
+                        height: 1,
+                        padding: EdgeInsets.zero,
+                        enabled: false,
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: const Color(0xFF362215),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        value: 'logout',
+                        child: _buildMenuItem(
+                          Icons.logout,
+                          'Keluar',
+                          isLogout: true,
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) => _handleMenuSelection(context, value),
+                  );
                 },
               ),
             ],
@@ -397,7 +442,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       children: [
         Icon(
           icon,
-          color: isLogout ? Colors.red.shade400 : Color(0xFF653611),
+          color: isLogout ? Colors.red.shade400 : const Color(0xFFB45309),
           size: 18,
         ),
         const SizedBox(width: 10),
@@ -415,32 +460,20 @@ class _CustomAppBarState extends State<CustomAppBar> {
   void _handleMenuSelection(BuildContext context, String value) {
     switch (value) {
       case 'account':
-        // TODO: Navigate to profile
-        Navigator.pushNamed(context, '/profile');
+        mainScreenKey.currentState?.goToProfile();
         break;
       case 'orders':
-        // TODO: Navigate to orders
-        Navigator.pushNamed(context, '/orders');
+        mainScreenKey.currentState?.goToOrders();
         break;
       case 'studio':
-        // TODO: Navigate to studio
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fitur Studio Seniman segera hadir'),
-            backgroundColor: Color(0xFF653611),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        mainScreenKey.currentState?.goToProfile();
+        // Buka Studio dari tab Akun
+        Future.delayed(const Duration(milliseconds: 300), () {
+          Navigator.pushNamed(context, '/studio');
+        });
         break;
       case 'dashboard':
-        // TODO: Navigate to admin dashboard
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fitur Dashboard Admin segera hadir'),
-            backgroundColor: Color(0xFF653611),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        Navigator.pushNamed(context, '/admin');
         break;
       case 'logout':
         _showLogoutDialog(context);

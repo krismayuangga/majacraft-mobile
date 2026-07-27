@@ -32,26 +32,30 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600),
+      duration: const Duration(milliseconds: 2200), // lebih lambat
     );
 
-    // Logo: fade-in + scale-up
+    // Logo: fade-in + scale-up lebih halus
     _fadeAnim = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
     );
 
-    _scaleAnim = Tween<double>(begin: 0.75, end: 1.0).animate(
+    _scaleAnim = Tween<double>(begin: 0.88, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack),
+        curve: const Interval(
+          0.0,
+          0.55,
+          curve: Curves.easeOut,
+        ), // easeOut bukan easeOutBack agar tidak bounce
       ),
     );
 
     // Tagline fades in slightly later
     _taglineFade = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.4, 0.9, curve: Curves.easeOut),
+      curve: const Interval(0.45, 0.85, curve: Curves.easeOut),
     );
 
     // Jalankan animasi + Firebase init BERSAMAAN (parallel)
@@ -61,10 +65,11 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _initFirebaseAndNavigate() async {
-    // FCM permission request (lambat) jalan paralel dengan animasi splash
+    // Animasi + FCM init jalan bersamaan
+    // Total minimum: 3.5 detik (animasi 2.2s + hold 1.3s)
     await Future.wait([
       _initFCMPermission(),
-      Future.delayed(const Duration(milliseconds: 2600)),
+      Future.delayed(const Duration(milliseconds: 3500)),
     ]);
     _navigate();
   }
@@ -177,16 +182,22 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Container(
                         decoration: BoxDecoration(
                           boxShadow: [
+                            // Glow halus — opacity rendah, spread kecil
                             BoxShadow(
-                              color: const Color(0xFFD4AF37).withOpacity(0.35),
-                              blurRadius: 60,
-                              spreadRadius: 10,
+                              color: const Color(0xFFD4AF37).withOpacity(0.18),
+                              blurRadius: 45,
+                              spreadRadius: 4,
+                            ),
+                            BoxShadow(
+                              color: const Color(0xFFD4AF37).withOpacity(0.08),
+                              blurRadius: 90,
+                              spreadRadius: 12,
                             ),
                           ],
                         ),
                         child: Image.asset(
                           'assets/logo-maja-splash.png',
-                          width: 260,
+                          width: 240,
                           filterQuality: FilterQuality.high,
                         ),
                       ),

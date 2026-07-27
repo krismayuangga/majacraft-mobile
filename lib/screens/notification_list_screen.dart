@@ -24,9 +24,11 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
   @override
   void initState() {
     super.initState();
-    // Configure timeago to use Indonesian locale
     timeago.setLocaleMessages('id', timeago.IdMessages());
-    _loadNotifications();
+    // Gunakan addPostFrameCallback agar context sudah fully mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadNotifications();
+    });
   }
 
   Future<void> _loadNotifications() async {
