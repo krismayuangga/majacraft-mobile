@@ -76,20 +76,33 @@ class _UpgradeToSellerDialogState extends State<UpgradeToSellerDialog> {
         }),
       );
 
-      final data = jsonDecode(response.body);
-
       if (!mounted) return;
 
-      if (response.statusCode == 200 && data['success'] == true) {
-        // Update role di AuthProvider agar UI langsung berubah
+      Map<String, dynamic> data = {};
+      try {
+        data = jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (_) {}
+
+      // Ambil pesan error dari berbagai kemungkinan key
+      String? errorMsg =
+          data['error'] as String? ??
+          data['message'] as String? ??
+          (data['data'] is Map ? (data['data'] as Map)['error'] : null);
+
+      if (response.statusCode == 200 || data['success'] == true) {
+        // Berhasil → refresh user data dan tutup dialog
         await context.read<AuthProvider>().refreshUserData();
+        if (!mounted) return;
         Navigator.pop(context);
         widget.onSuccess();
       } else {
-        setState(() => _errorMessage = data['error'] ?? 'Gagal upgrade akun');
+        setState(
+          () => _errorMessage =
+              errorMsg ?? 'Gagal upgrade akun (${response.statusCode})',
+        );
       }
     } catch (e) {
-      setState(() => _errorMessage = 'Terjadi kesalahan. Coba lagi.');
+      setState(() => _errorMessage = 'Terjadi kesalahan: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
