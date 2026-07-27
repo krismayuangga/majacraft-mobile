@@ -234,33 +234,60 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
   }
 
   Widget _buildDisputeInfo() {
-    final order = _dispute!.order;
+    final dispute = _dispute!;
+    final order = dispute.order;
+
+    // Extract product info from first item (try multiple field paths)
+    String productName = 'Produk';
+    String productImageUrl = '';
+    int productPrice = 0;
+
+    if (order.items.isNotEmpty) {
+      final item = order.items[0] as Map;
+      productName = item['productName']?.toString() ?? 'Produk';
+      productPrice = _parseItemInt(item['price']);
+
+      // Try different image field paths
+      final product = item['product'] as Map? ?? {};
+      final images = product['images'] as List?;
+      if (images != null && images.isNotEmpty) {
+        final rawUrl = (images[0] as Map)['url']?.toString() ?? '';
+        productImageUrl = rawUrl.startsWith('http')
+            ? rawUrl
+            : 'https://majacraft.id$rawUrl';
+      } else if (product['image'] != null) {
+        final rawUrl = product['image'].toString();
+        productImageUrl = rawUrl.startsWith('http')
+            ? rawUrl
+            : 'https://majacraft.id$rawUrl';
+      }
+    }
+
     return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
       padding: const EdgeInsets.all(16),
-      color: Colors.grey.shade50,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Produk row
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Product image
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  order.items.isNotEmpty
-                      ? 'https://majacraft.id${(order.items[0] as Map)["productImage"] ?? ""}'
-                      : 'https://via.placeholder.com/60',
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 60,
-                      height: 60,
-                      color: Colors.grey.shade300,
-                      child: Icon(Icons.image, color: Colors.grey.shade500),
-                    );
-                  },
-                ),
+                child: productImageUrl.isNotEmpty
+                    ? Image.network(
+                        productImageUrl,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                      )
+                    : _imagePlaceholder(),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -268,11 +295,7 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      order.items.isNotEmpty
-                          ? (order.items[0] as Map)['productName']
-                                    ?.toString() ??
-                                'Produk'
-                          : 'Produk',
+                      productName,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -280,25 +303,184 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
-                      'Order #${order.orderNumber}',
+                      'Pesanan #${order.orderNumber}',
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
                       ),
                     ),
+                    if (order.total > 0) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Total: ${_formatRupiah(order.total)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF653611),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          _buildInfoRow('Alasan', _dispute!.reason.displayName),
-          _buildInfoRow('Permintaan', _dispute!.requestedAction.displayName),
+
+          const Divider(height: 20),
+
+          // Info komplain
+          _buildInfoRow('Alasan', dispute.reason.displayName),
+          _buildInfoRow('Permintaan', dispute.requestedAction.displayName),
+
+          // Deskripsi
+          const SizedBox(height: 8),
+          Text(
+            'Deskripsi:',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            dispute.description,
+            style: const TextStyle(fontSize: 13, height: 1.4),
+          ),
+
+          // Pihak yang terlibat
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _buildParticipantChip(
+                'Pembeli',
+                dispute.buyer.name,
+                Colors.blue.shade50,
+                Colors.blue.shade700,
+              ),
+              const SizedBox(width: 8),
+              _buildParticipantChip(
+                'Penjual',
+                dispute.seller.name,
+                Colors.green.shade50,
+                Colors.green.shade700,
+              ),
+              if (dispute.assignedAdmin != null) ...[
+                const SizedBox(width: 8),
+                _buildParticipantChip(
+                  'Admin',
+                  dispute.assignedAdmin!.name,
+                  Colors.purple.shade50,
+                  Colors.purple.shade700,
+                ),
+              ],
+            ],
+          ),
+
+          // Foto bukti (jika ada)
+          if (dispute.evidenceUrls.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Foto Bukti:',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 72,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: dispute.evidenceUrls.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, i) {
+                  final url = dispute.evidenceUrls[i];
+                  final fullUrl = url.startsWith('http')
+                      ? url
+                      : 'https://majacraft.id$url';
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.network(
+                      fullUrl,
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _imagePlaceholder(size: 72),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Widget _imagePlaceholder({double size = 64}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        Icons.image_outlined,
+        color: Colors.grey.shade400,
+        size: size * 0.4,
+      ),
+    );
+  }
+
+  Widget _buildParticipantChip(String role, String name, Color bg, Color fg) {
+    return Flexible(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              role,
+              style: TextStyle(
+                fontSize: 10,
+                color: fg,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              name,
+              style: TextStyle(
+                fontSize: 11,
+                color: fg,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static int _parseItemInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  String _formatRupiah(int amount) {
+    return 'Rp${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
 
   Widget _buildInfoRow(String label, String value) {

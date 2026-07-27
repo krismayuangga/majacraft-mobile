@@ -55,9 +55,19 @@ class DisputeService {
 
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'];
+        // Kembalikan raw data — ComplainFormScreen hanya butuh id & disputeNumber
+        // Tidak parse ke Dispute object karena response POST tidak include buyer/seller
         return {
-          'disputeNumber': data['disputeNumber']?.toString() ?? '',
-          'dispute': Dispute.fromJson(data['dispute'] as Map<String, dynamic>),
+          'disputeNumber':
+              data['disputeNumber']?.toString() ??
+              data['dispute']?['disputeNumber']?.toString() ??
+              '',
+          'dispute': {
+            'id':
+                data['dispute']?['id']?.toString() ??
+                data['id']?.toString() ??
+                '',
+          },
         };
       }
 

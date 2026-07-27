@@ -294,49 +294,87 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Widget _buildContent() {
     final order = _order!;
-    return RefreshIndicator(
-      onRefresh: _loadOrder,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status header
-            _buildStatusHeader(order),
-            const SizedBox(height: 16),
+    final hasActions =
+        order.canPay ||
+        order.canConfirm ||
+        order.canCancel ||
+        order.canComplain ||
+        order.activeDispute != null;
 
-            // Payment deadline countdown (if PENDING_PAYMENT)
-            if (order.canPay && order.paymentDeadline != null) ...[
-              _buildDeadlineCountdown(order),
-              const SizedBox(height: 16),
-            ],
+    return Column(
+      children: [
+        // Scroll content
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadOrder,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStatusHeader(order),
+                  const SizedBox(height: 16),
 
-            // Tracking (if SHIPPED/DELIVERED)
-            if (_tracking != null) ...[
-              _buildTrackingSection(),
-              const SizedBox(height: 16),
-            ],
+                  // Payment deadline countdown (if PENDING_PAYMENT)
+                  if (order.canPay && order.paymentDeadline != null) ...[
+                    _buildDeadlineCountdown(order),
+                    const SizedBox(height: 16),
+                  ],
 
-            // Order items
-            _buildItemsSection(order),
-            const SizedBox(height: 16),
+                  // Tracking (if SHIPPED/DELIVERED)
+                  if (_tracking != null) ...[
+                    _buildTrackingSection(),
+                    const SizedBox(height: 16),
+                  ],
 
-            // Shipping info
-            _buildShippingSection(order),
-            const SizedBox(height: 16),
+                  // Order items
+                  _buildItemsSection(order),
+                  const SizedBox(height: 16),
 
-            // Payment summary
-            _buildPaymentSection(order),
-            const SizedBox(height: 16),
+                  // Shipping info
+                  _buildShippingSection(order),
+                  const SizedBox(height: 16),
 
-            // Order info
-            _buildOrderInfoSection(order),
+                  // Payment summary
+                  _buildPaymentSection(order),
+                  const SizedBox(height: 16),
 
-            const SizedBox(height: 80),
-          ],
+                  // Order info
+                  _buildOrderInfoSection(order),
+
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
+
+        // Tombol aksi fixed di bawah
+        if (hasActions)
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: SafeArea(
+              top: false,
+              child: _isActionLoading
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : _buildActionButtons(order),
+            ),
+          ),
+      ],
     );
   }
 
@@ -372,22 +410,52 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
             ),
           ),
+          // Action buttons sudah dipindah ke bottomNavigationBar
           const SizedBox(height: 8),
           Text(
             order.orderNumber,
             style: const TextStyle(fontSize: 14, color: Colors.grey),
           ),
-
-          // Action buttons
-          if (!_isActionLoading) ...[
-            const SizedBox(height: 16),
-            _buildActionButtons(order),
-          ] else
-            const Padding(
-              padding: EdgeInsets.only(top: 16),
-              child: CircularProgressIndicator(),
-            ),
         ],
+      ),
+    );
+  }
+
+  Widget? _buildBottomBarOrNull() {
+    if (_order == null) return null;
+    final order = _order!;
+    final hasActions =
+        order.canPay ||
+        order.canConfirm ||
+        order.canCancel ||
+        order.canComplain ||
+        order.activeDispute != null;
+    if (!hasActions) return null;
+    return _buildBottomActionBar(order);
+  }
+
+  // ─── Bottom Action Bar (fixed di bawah) ─────────────────────────────────────
+
+  Widget _buildBottomActionBar(Order order) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: _isActionLoading
+            ? const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : _buildActionButtons(order),
       ),
     );
   }

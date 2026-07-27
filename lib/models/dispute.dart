@@ -370,6 +370,7 @@ class Dispute {
   // Messages & Timeline
   final List<DisputeMessage> messages;
   final List<DisputeTimeline> timeline;
+  final List<String> evidenceUrls;
 
   Dispute({
     required this.id,
@@ -390,6 +391,7 @@ class Dispute {
     this.assignedAdmin,
     this.messages = const [],
     this.timeline = const [],
+    this.evidenceUrls = const [],
   });
 
   factory Dispute.fromJson(Map<String, dynamic> json) {
@@ -442,6 +444,9 @@ class Dispute {
           : null,
       messages: parsedMessages,
       timeline: parsedTimeline,
+      evidenceUrls: (json['evidenceUrls'] as List? ?? [])
+          .map((u) => u.toString())
+          .toList(),
     );
   }
 

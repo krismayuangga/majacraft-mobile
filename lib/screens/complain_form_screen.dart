@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../providers/auth_provider.dart';
 import '../models/dispute.dart';
 import '../services/dispute_service.dart';
+import '../services/upload_service.dart';
 import '../services/api_service.dart';
 
 class ComplainFormScreen extends StatefulWidget {
@@ -24,10 +27,17 @@ class _ComplainFormScreenState extends State<ComplainFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descController = TextEditingController();
   final _disputeService = DisputeService(ApiService());
+  final _uploadService = UploadService();
+  final _imagePicker = ImagePicker();
 
   DisputeReason? _selectedReason;
   DisputeAction? _selectedAction;
   bool _isSubmitting = false;
+
+  // Foto bukti
+  final List<File> _selectedPhotos = [];
+  final List<String> _uploadedUrls = [];
+  bool _isUploadingPhoto = false;
 
   static const Map<DisputeReason, String> _reasons = {
     DisputeReason.NOT_AS_DESCRIBED: 'Tidak sesuai deskripsi',
@@ -51,6 +61,95 @@ class _ComplainFormScreenState extends State<ComplainFormScreen> {
   void dispose() {
     _descController.dispose();
     super.dispose();
+  }
+
+  // ─── Photo Picker ──────────────────────────────────────────────────────────
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    if (_selectedPhotos.length >= 5) {
+      _showError('Maksimal 5 foto');
+      return;
+    }
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 1280,
+      );
+      if (picked == null) return;
+      setState(() => _selectedPhotos.add(File(picked.path)));
+    } catch (e) {
+      _showError(
+        'Gagal membuka ${source == ImageSource.camera ? "kamera" : "galeri"}',
+      );
+    }
+  }
+
+  void _removePhoto(int index) {
+    setState(() {
+      _selectedPhotos.removeAt(index);
+      if (index < _uploadedUrls.length) _uploadedUrls.removeAt(index);
+    });
+  }
+
+  Future<List<String>> _uploadAllPhotos(String token) async {
+    if (_selectedPhotos.isEmpty) return [];
+    setState(() => _isUploadingPhoto = true);
+    final urls = <String>[];
+    for (final file in _selectedPhotos) {
+      final url = await _uploadService.uploadImage(file, 'evidence', token);
+      urls.add(url);
+    }
+    setState(() => _isUploadingPhoto = false);
+    return urls;
+  }
+
+  void _showPhotoSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 8, bottom: 4),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.camera_alt_outlined,
+                color: Color(0xFF653611),
+              ),
+              title: const Text('Ambil dari Kamera'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: Color(0xFF653611),
+              ),
+              title: const Text('Pilih dari Galeri'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _submit() async {
@@ -96,11 +195,16 @@ class _ComplainFormScreenState extends State<ComplainFormScreen> {
 
     try {
       final token = context.read<AuthProvider>().token!;
+
+      // Upload foto bukti terlebih dahulu
+      final evidenceUrls = await _uploadAllPhotos(token);
+
       final result = await _disputeService.createDispute(
         orderId: widget.orderId,
         reason: _selectedReason!,
         description: _descController.text.trim(),
         requestedAction: _selectedAction!,
+        evidenceUrls: evidenceUrls,
         token: token,
       );
 
@@ -310,13 +414,127 @@ class _ComplainFormScreenState extends State<ComplainFormScreen> {
                 ),
               ),
 
+              const SizedBox(height: 20),
+
+              // ─── Foto Bukti ───────────────────────────────────────────────
+              _buildLabel('Foto Bukti (opsional, maks 5 foto)'),
+              const SizedBox(height: 4),
+              Text(
+                'Foto kondisi barang membantu mempercepat proses komplain',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 10),
+
+              // Grid foto yang sudah dipilih + tombol tambah
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ..._selectedPhotos.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final file = entry.value;
+                    return Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            file,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: () => _removePhoto(i),
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.6),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+
+                  // Tombol tambah foto (jika belum 5)
+                  if (_selectedPhotos.length < 5)
+                    GestureDetector(
+                      onTap: _showPhotoSourceDialog,
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            style: BorderStyle.solid,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_a_photo_outlined,
+                              color: const Color(0xFF653611),
+                              size: 28,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tambah\nFoto',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+
+              if (_isUploadingPhoto)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Mengunggah foto...',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+
               const SizedBox(height: 32),
 
               // Submit button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submit,
+                  onPressed: (_isSubmitting || _isUploadingPhoto)
+                      ? null
+                      : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF653611),
                     foregroundColor: Colors.white,
