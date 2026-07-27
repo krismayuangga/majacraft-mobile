@@ -31,7 +31,20 @@
           "package_name": "id.majacraft.majacraft_mobile"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1089490083968-rkgraubum7psftqqp5kd2r3mb07up8nm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "id.majacraft.majacraft_mobile",
+            "certificate_hash": "acb0965811ae3a19505bfc2db8b3f31f595b3a8c"
+          }
+        },
+        {
+          "client_id": "1089490083968-mpv497utnj95294vtjid83j8g83i0ooe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDp37qactaRvUt3f0wOEgX50YaSsVUMHD8"
@@ -39,7 +52,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1089490083968-mpv497utnj95294vtjid83j8g83i0ooe.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

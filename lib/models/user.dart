@@ -30,11 +30,19 @@ class User {
     // Extract stats from _count if available
     final count = json['_count'] as Map<String, dynamic>?;
 
+    // Fix relative image URL — tambah domain jika belum ada
+    String? imageUrl = json['image'];
+    if (imageUrl != null &&
+        imageUrl.isNotEmpty &&
+        !imageUrl.startsWith('http')) {
+      imageUrl = 'https://majacraft.id$imageUrl';
+    }
+
     return User(
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
-      image: json['image'],
+      image: imageUrl,
       phone: json['phone'],
       role: json['role'] ?? 'buyer',
       kycStatus: json['kycStatus'],

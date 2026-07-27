@@ -28,27 +28,40 @@ class _CustomAppBarState extends State<CustomAppBar> {
   int _unreadCount = 0;
   int _chatUnreadCount = 0;
   bool _isLoadingCount = false;
-  Timer? _chatPollingTimer;
-  Timer? _notifPollingTimer;
+
+  // Static timer — hanya 1 instance di seluruh app agar tidak polling 3x
+  static Timer? _chatPollingTimer;
+  static Timer? _notifPollingTimer;
+  static int _activeInstances = 0;
 
   @override
   void initState() {
     super.initState();
+    _activeInstances++;
     _loadUnreadCount();
     _loadChatUnreadCount();
-    _startChatPolling();
-    _startNotifPolling();
+    // Mulai timer hanya jika belum ada instance lain yang menjalankannya
+    if (_activeInstances == 1) {
+      _startChatPolling();
+      _startNotifPolling();
+    }
   }
 
   @override
   void dispose() {
-    _chatPollingTimer?.cancel();
-    _notifPollingTimer?.cancel();
+    _activeInstances--;
+    // Hentikan timer jika tidak ada instance yang tersisa
+    if (_activeInstances == 0) {
+      _chatPollingTimer?.cancel();
+      _chatPollingTimer = null;
+      _notifPollingTimer?.cancel();
+      _notifPollingTimer = null;
+    }
     super.dispose();
   }
 
   void _startChatPolling() {
-    // Poll every 10 seconds for real-time updates
+    _chatPollingTimer?.cancel();
     _chatPollingTimer = Timer.periodic(
       const Duration(seconds: 10),
       (_) => _loadChatUnreadCount(),
@@ -56,7 +69,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   }
 
   void _startNotifPolling() {
-    // Poll notifikasi setiap 30 detik agar badge update setelah push notification masuk
+    _notifPollingTimer?.cancel();
     _notifPollingTimer = Timer.periodic(
       const Duration(seconds: 30),
       (_) => _loadUnreadCount(),
