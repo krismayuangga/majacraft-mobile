@@ -78,40 +78,33 @@ class _CustomAppBarState extends State<CustomAppBar> {
           });
         }
       }
-    } catch (e, stack) {
-      print('[CustomAppBar] Error loading chat unread count: $e');
-      print('[CustomAppBar] Stack: $stack');
+    } catch (_) {
+      // Diam jika gagal — tidak authenticated atau network error
     }
   }
 
   Future<void> _loadUnreadCount() async {
     if (_isLoadingCount) return;
 
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated || authProvider.token == null) return;
+
     setState(() => _isLoadingCount = true);
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final token = authProvider.token;
+      final notifications = await _notificationService.getNotifications(
+        authProvider.token!,
+      );
+      final unreadCount = _notificationService.getUnreadCount(notifications);
 
-      if (token != null) {
-        final notifications = await _notificationService.getNotifications(
-          token,
-        );
-        final unreadCount = _notificationService.getUnreadCount(notifications);
-
-        if (mounted) {
-          setState(() {
-            _unreadCount = unreadCount;
-            _isLoadingCount = false;
-          });
-        }
-      }
-    } catch (e, stack) {
-      print('[CustomAppBar] Error loading notification unread count: $e');
-      print('[CustomAppBar] Stack: $stack');
       if (mounted) {
-        setState(() => _isLoadingCount = false);
+        setState(() {
+          _unreadCount = unreadCount;
+          _isLoadingCount = false;
+        });
       }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingCount = false);
     }
   }
 

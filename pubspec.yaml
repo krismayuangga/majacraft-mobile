@@ -111,9 +111,9 @@ flutter:
     - assets/logo-app-maja.png
     - assets/background-splash-dan-card.jpg
     - assets/logo-maja-splash.png
-    - assets/card1.png
-    - assets/card2.png
-    - assets/card3.png
+    - assets/card1.jpg
+    - assets/card2.jpg
+    - assets/card3.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

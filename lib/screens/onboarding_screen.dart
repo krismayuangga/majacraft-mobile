@@ -19,19 +19,19 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   static const _pages = [
     _OnboardingData(
-      image: 'assets/card1.png',
+      image: 'assets/card1.jpg',
       title: 'Karya Autentik\nLangsung dari Seniman',
       description:
           'Jelajahi ribuan karya kerajinan batu, batik tulis, ukiran, hingga perhiasan dari seniman dan pengrajin lokal terbaik Indonesia.',
     ),
     _OnboardingData(
-      image: 'assets/card2.png',
+      image: 'assets/card2.jpg',
       title: 'Ruang Budaya\n& Komunitas',
       description:
           'Temukan kisah di balik setiap karya, artikel budaya, serta event komunitas seni Nusantara dalam satu genggaman.',
     ),
     _OnboardingData(
-      image: 'assets/card3.png',
+      image: 'assets/card3.jpg',
       title: 'Keamanan Transaksi\n& Pengiriman',
       description:
           'Sistem pembayaran terproteksi dengan jaminan barang sesuai deskripsi dan pengemasan standar karya seni tinggi.',
