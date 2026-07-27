@@ -17,53 +17,69 @@ class _InfoWebViewScreenState extends State<InfoWebViewScreen> {
   bool _isLoading = true;
   int _loadingProgress = 0;
 
-  // CSS yang diinjeksi untuk menyembunyikan navbar/footer/bottom-nav website
-  static const String _hideChromeCss = '''
+  // JavaScript yang diinjeksi untuk menyembunyikan chrome website (navbar, footer, dll.)
+  // Menggunakan MutationObserver agar bekerja meski Next.js hydrate setelah DOMContentLoaded
+  static const String _hideChromeCss = r'''
     (function() {
-      var style = document.createElement('style');
-      style.innerHTML = `
-        /* Sembunyikan navbar/header website */
-        nav,
-        header,
-        .navbar,
-        .nav-bar,
-        [class*="Navbar"],
-        [class*="navbar"],
-        [class*="Header"]:not(h1):not(h2):not(h3):not(h4),
-        [id*="navbar"],
-        [id*="header"],
-        
-        /* Sembunyikan footer website */
-        footer,
-        .footer,
-        [class*="Footer"],
-        [class*="footer"],
-        [id*="footer"],
-        
-        /* Sembunyikan bottom navigation */
-        .bottom-nav,
-        .bottom-menu,
-        [class*="BottomNav"],
-        [class*="bottom-nav"],
-        [class*="BottomMenu"],
-        [id*="bottom-nav"],
-        
-        /* Fixed/sticky elemen navigasi */
-        .sticky-top,
-        .fixed-top,
-        .fixed-bottom
-        { 
-          display: none !important; 
-          visibility: hidden !important;
+      function hideChrome() {
+        // Sembunyikan berdasarkan HTML tags standar
+        var selectors = [
+          'nav', 'header', 'footer',
+          // Tailwind sticky/fixed top bar
+          '[class*="sticky"]', '[class*="fixed"]',
+          // Bottom navigation / mobile bottom bar  
+          '[class*="bottom"]',
+          // Elemen dengan z-index tinggi yang biasanya navbar
+        ].join(',');
+
+        // Juga cari elemen nav/header/footer langsung
+        ['nav','header','footer'].forEach(function(tag) {
+          document.querySelectorAll(tag).forEach(function(el) {
+            el.style.setProperty('display', 'none', 'important');
+          });
+        });
+
+        // Cari fixed/sticky elemen di atas/bawah halaman
+        document.querySelectorAll('[class]').forEach(function(el) {
+          var cls = el.className || '';
+          if (typeof cls !== 'string') return;
+          // Tailwind sticky top classes
+          if (cls.includes('sticky') && (cls.includes('top') || cls.includes('z-'))) {
+            el.style.setProperty('display', 'none', 'important');
+          }
+          // Tailwind fixed classes
+          if (cls.includes('fixed') && (cls.includes('top') || cls.includes('bottom'))) {
+            el.style.setProperty('display', 'none', 'important');
+          }
+        });
+
+        // Hapus padding-top body yang biasanya untuk navbar
+        document.body.style.setProperty('padding-top', '0', 'important');
+        document.body.style.setProperty('margin-top', '0', 'important');
+        if (document.documentElement) {
+          document.documentElement.style.setProperty('scroll-padding-top', '0', 'important');
         }
-        
-        /* Hilangkan padding-top yang biasanya dibuat untuk navbar */
-        body { 
-          padding-top: 0 !important;
-          margin-top: 0 !important;
-        }
-      `;
-      document.head.appendChild(style);
+      }
+
+      // Jalankan langsung
+      hideChrome();
+
+      // Jalankan lagi setelah delay (Next.js hydration)
+      setTimeout(hideChrome, 500);
+      setTimeout(hideChrome, 1500);
+
+      // MutationObserver untuk menangkap elemen yang ditambahkan setelah load
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.addedNodes.length > 0) {
+            hideChrome();
+          }
+        });
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      // Berhenti observe setelah 10 detik agar tidak boros performa
+      setTimeout(function() { observer.disconnect(); }, 10000);
     })();
   ''';
 
