@@ -79,6 +79,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
 
       await _notificationService.markAsRead(notification.id, token);
 
+      if (!mounted) return;
       setState(() {
         final index = _notifications.indexWhere((n) => n.id == notification.id);
         if (index != -1) {
@@ -100,6 +101,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
 
       await _notificationService.markAllAsRead(_notifications, token);
 
+      if (!mounted) return;
       setState(() {
         _notifications = _notifications
             .map((n) => n.copyWith(read: true))
