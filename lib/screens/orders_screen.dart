@@ -414,24 +414,37 @@ class _OrderCard extends StatelessWidget {
                           // Product Image
                           ClipRRect(
                             borderRadius: BorderRadius.circular(6),
-                            child: Image.network(
-                              item.productImage,
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 50,
-                                  height: 50,
-                                  color: Colors.grey.shade200,
-                                  child: const Icon(
-                                    Icons.image_not_supported,
-                                    color: Colors.grey,
-                                    size: 20,
+                            child: item.productImage.isNotEmpty
+                                ? Image.network(
+                                    item.productImage.startsWith('http')
+                                        ? item.productImage
+                                        : 'https://majacraft.id${item.productImage}',
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 50,
+                                        height: 50,
+                                        color: Colors.grey.shade200,
+                                        child: const Icon(
+                                          Icons.image_not_supported,
+                                          color: Colors.grey,
+                                          size: 20,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    width: 50,
+                                    height: 50,
+                                    color: Colors.grey.shade200,
+                                    child: const Icon(
+                                      Icons.image_not_supported,
+                                      color: Colors.grey,
+                                      size: 20,
+                                    ),
                                   ),
-                                );
-                              },
-                            ),
                           ),
                           const SizedBox(width: 12),
 

@@ -146,12 +146,12 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
 
   Color _getRoleBubbleColor(SenderRole role) {
     switch (role) {
-      case SenderRole.buyer:
-        return const Color(0xFFFFA726); // Amber
-      case SenderRole.seller:
-        return const Color(0xFF42A5F5); // Blue
-      case SenderRole.admin:
-        return const Color(0xFF66BB6A); // Green
+      case SenderRole.BUYER:
+        return const Color(0xFFFFA726);
+      case SenderRole.SELLER:
+        return const Color(0xFF42A5F5);
+      case SenderRole.ADMIN:
+        return const Color(0xFF66BB6A);
     }
   }
 
@@ -217,19 +217,18 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
 
   Color _getStatusColor(DisputeStatus status) {
     switch (status) {
-      case DisputeStatus.awaitingSellerResponse:
+      case DisputeStatus.PENDING_SELLER:
         return Colors.orange;
-      case DisputeStatus.awaitingReturnShipment:
-      case DisputeStatus.returnInTransit:
+      case DisputeStatus.SELLER_RESPONDED:
         return Colors.blue;
-      case DisputeStatus.returnReceived:
-        return Colors.green;
-      case DisputeStatus.escalatedToAdmin:
-      case DisputeStatus.inMediation:
+      case DisputeStatus.IN_MEDIATION:
         return Colors.purple;
-      case DisputeStatus.resolved:
+      case DisputeStatus.REFUND_PENDING:
+        return Colors.green;
+      case DisputeStatus.RESOLVED:
         return Colors.green.shade700;
-      case DisputeStatus.cancelled:
+      case DisputeStatus.CLOSED:
+      case DisputeStatus.CANCELLED:
         return Colors.grey;
     }
   }
@@ -247,7 +246,9 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  'https://majacraft.id${order.productImage}',
+                  order.items.isNotEmpty
+                      ? 'https://majacraft.id${(order.items[0] as Map)["productImage"] ?? ""}'
+                      : 'https://via.placeholder.com/60',
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
@@ -267,7 +268,11 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      order.productName,
+                      order.items.isNotEmpty
+                          ? (order.items[0] as Map)['productName']
+                                    ?.toString() ??
+                                'Produk'
+                          : 'Produk',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -362,7 +367,7 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
 
   Widget _buildMessageBubble(DisputeMessage message) {
     // System message
-    if (message.isSystemMessage) {
+    if (message.isSystemMsg) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Center(
@@ -402,7 +407,7 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
               radius: 16,
               backgroundColor: bubbleColor.withOpacity(0.2),
               child: Text(
-                message.sender.name[0].toUpperCase(),
+                message.sender?.name?[0].toUpperCase() ?? '?',
                 style: TextStyle(
                   color: bubbleColor,
                   fontSize: 14,
@@ -422,7 +427,7 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4, left: 4),
                     child: Text(
-                      '${message.sender.name} (${message.senderRole.displayName})',
+                      '${message.sender?.name ?? 'Pengguna'} (${message.senderRole.displayName})',
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey.shade600,
@@ -478,7 +483,7 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // BUYER: Submit return tracking
-          if (isBuyer && dispute.status == DisputeStatus.awaitingReturnShipment)
+          if (isBuyer && dispute.status == DisputeStatus.REFUND_PENDING)
             ElevatedButton.icon(
               onPressed: _showSubmitReturnDialog,
               icon: const Icon(Icons.local_shipping),
@@ -489,7 +494,7 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
             ),
 
           // SELLER: Confirm return received
-          if (isSeller && dispute.status == DisputeStatus.returnInTransit)
+          if (isSeller && dispute.status == DisputeStatus.REFUND_PENDING)
             ElevatedButton.icon(
               onPressed: _confirmReturnReceived,
               icon: const Icon(Icons.check_circle),

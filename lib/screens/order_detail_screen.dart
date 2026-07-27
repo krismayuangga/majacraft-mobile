@@ -6,6 +6,8 @@ import '../models/order.dart';
 import '../services/order_service.dart';
 import '../services/api_service.dart';
 import '../screens/payment_webview_screen.dart';
+import '../screens/complain_form_screen.dart';
+import '../screens/dispute_chat_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final String orderId;
@@ -212,6 +214,31 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
   }
 
+  Future<void> _openComplainForm(Order order) async {
+    final disputeId = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ComplainFormScreen(
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+        ),
+      ),
+    );
+    if (disputeId != null && mounted) {
+      _openDisputeChat(disputeId);
+      _loadOrder();
+    }
+  }
+
+  void _openDisputeChat(String disputeId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DisputeChatScreen(disputeId: disputeId),
+      ),
+    ).then((_) => _loadOrder());
+  }
+
   // ─── Build ────────────────────────────────────────────────────────────────────
 
   @override
@@ -409,6 +436,44 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red,
                 side: const BorderSide(color: Colors.red),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+
+        // Tombol Ajukan Komplain (jika belum ada dispute aktif)
+        if (order.canComplain) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _openComplainForm(order),
+              icon: const Icon(Icons.report_problem_outlined),
+              label: const Text('Ajukan Komplain'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.orange.shade700,
+                side: BorderSide(color: Colors.orange.shade700),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+
+        // Tombol Buka Room Mediasi (jika sudah ada dispute)
+        if (order.activeDispute != null) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _openDisputeChat(order.activeDispute!.id),
+              icon: const Icon(Icons.support_agent_outlined),
+              label: Text(
+                'Buka Room Mediasi (${order.activeDispute!.disputeNumber})',
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple.shade700,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),

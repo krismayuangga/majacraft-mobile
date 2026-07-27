@@ -1,5 +1,43 @@
 /// Dispute Models untuk chat room komplain/mediasi
 
+// ─── DisputeSummary — dipakai di Order model ──────────────────────────────────
+
+class DisputeSummary {
+  final String id;
+  final String status;
+  final String disputeNumber;
+  final DateTime createdAt;
+
+  DisputeSummary({
+    required this.id,
+    required this.status,
+    required this.disputeNumber,
+    required this.createdAt,
+  });
+
+  factory DisputeSummary.fromJson(Map<String, dynamic> json) {
+    return DisputeSummary(
+      id: json['id']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'PENDING_SELLER',
+      disputeNumber: json['disputeNumber']?.toString() ?? '',
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+    );
+  }
+
+  /// Status yang masih aktif (belum selesai)
+  static const _activeStatuses = [
+    'PENDING_SELLER',
+    'SELLER_RESPONDED',
+    'IN_MEDIATION',
+    'REFUND_PENDING',
+    'REFUND_FAILED',
+  ];
+
+  bool get isActive => _activeStatuses.contains(status);
+}
+
 enum DisputeStatus {
   PENDING_SELLER,
   SELLER_RESPONDED,

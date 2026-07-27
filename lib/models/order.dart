@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dispute.dart';
 
 class OrderItem {
   final String id;
@@ -24,20 +25,43 @@ class OrderItem {
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     final product = json['product'] ?? {};
 
+    // Image URL — bisa dari product.images array atau field image langsung
+    String rawImage = '';
+    if (product['images'] is List && (product['images'] as List).isNotEmpty) {
+      rawImage = product['images'][0]['url']?.toString() ?? '';
+    } else if (product['image'] != null) {
+      rawImage = product['image'].toString();
+    }
+    // Prefix URL relatif dengan base domain
+    final fullImage = rawImage.isNotEmpty && !rawImage.startsWith('http')
+        ? 'https://majacraft.id$rawImage'
+        : rawImage;
+
+    final price = _parseInt(json['price'] ?? product['price']);
+    final quantity = _parseInt(json['qty'] ?? json['quantity'] ?? 1);
+    // Hitung subtotal jika tidak ada di response
+    final subtotal = _parseInt(json['subtotal']) > 0
+        ? _parseInt(json['subtotal'])
+        : price * quantity;
+
     return OrderItem(
       id: json['id']?.toString() ?? '',
       productId: json['productId']?.toString() ?? '',
       productName:
           product['name']?.toString() ?? json['productName']?.toString() ?? '',
       productSlug: product['slug']?.toString() ?? '',
-      productImage:
-          (product['images'] is List && (product['images'] as List).isNotEmpty)
-          ? (product['images'][0]['url']?.toString() ?? '')
-          : '',
-      price: json['price'] ?? product['price'] ?? 0,
-      quantity: json['quantity'] ?? 1,
-      subtotal: json['subtotal'] ?? 0,
+      productImage: fullImage,
+      price: price,
+      quantity: quantity,
+      subtotal: subtotal,
     );
+  }
+
+  static int _parseInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
   }
 }
 
@@ -66,6 +90,7 @@ class Order {
   final String? recipientPhone;
   final String? recipientCity;
   final String? recipientProvince;
+  final List<DisputeSummary> disputes;
 
   Order({
     required this.id,
@@ -92,6 +117,7 @@ class Order {
     this.recipientPhone,
     this.recipientCity,
     this.recipientProvince,
+    this.disputes = const [],
   });
 
   static int _parseInt(dynamic v) {
@@ -144,6 +170,9 @@ class Order {
       recipientPhone: address['phone']?.toString(),
       recipientCity: address['city']?.toString(),
       recipientProvince: address['province']?.toString(),
+      disputes: (json['disputes'] as List? ?? [])
+          .map((d) => DisputeSummary.fromJson(d as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -204,6 +233,15 @@ class Order {
 
   /// Apakah bisa konfirmasi diterima
   bool get canConfirm => status == 'DELIVERED' || status == 'SHIPPED';
+
+  /// Apakah bisa ajukan komplain (belum ada dispute aktif)
+  bool get canComplain =>
+      ['SHIPPED', 'DELIVERED', 'COMPLETED'].contains(status) &&
+      !disputes.any((d) => d.isActive);
+
+  /// Dispute aktif (jika ada)
+  DisputeSummary? get activeDispute =>
+      disputes.where((d) => d.status != 'CANCELLED').firstOrNull;
 
   /// Seller-specific: apakah bisa input resi
   bool get canInputResi => status == 'PROCESSING';
