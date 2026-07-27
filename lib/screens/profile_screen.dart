@@ -93,12 +93,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, authProvider, child) {
         if (!authProvider.isAuthenticated) {
           return Scaffold(
-            backgroundColor: const Color(0xFF4A2F21), // Same as bottom menu
+            backgroundColor: Colors.white,
             appBar: AppBar(
-              title: const Text('Akun', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'Akun',
+                style: TextStyle(color: Colors.black87),
+              ),
               centerTitle: true,
-              backgroundColor: const Color(0xFF4A2F21), // Same as bottom menu
-              elevation: 0,
+              backgroundColor: Colors.white,
+              elevation: 0.5,
             ),
             body: Center(
               child: Column(
@@ -107,14 +110,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Icon(
                     Icons.person_outlined,
                     size: 80,
-                    color: Colors.grey[600],
+                    color: Colors.grey[400],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Login Required',
+                    'Belum Masuk',
                     style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.grey[400],
+                      fontSize: 22,
+                      color: Colors.grey[700],
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -123,7 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Silakan login untuk mengakses profil',
                     style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
                   ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).push(
@@ -133,17 +136,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF653611),
+                      backgroundColor: const Color(0xFFB45309),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 48,
+                        horizontal: 52,
                         vertical: 14,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Login',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: const Text('Login', style: TextStyle(fontSize: 16)),
                   ),
                 ],
               ),
