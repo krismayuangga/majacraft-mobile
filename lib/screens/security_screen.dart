@@ -1,10 +1,20 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import '../providers/auth_provider.dart';
+import '../config/api_config.dart';
 import 'change_password_screen.dart';
 
-class SecurityScreen extends StatelessWidget {
+class SecurityScreen extends StatefulWidget {
   const SecurityScreen({Key? key}) : super(key: key);
+
+  @override
+  State<SecurityScreen> createState() => _SecurityScreenState();
+}
+
+class _SecurityScreenState extends State<SecurityScreen> {
+  bool _isDeletingAccount = false;
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +22,7 @@ class SecurityScreen extends StatelessWidget {
     final user = authProvider.user;
 
     // Check if user logged in via Google
-    final isGoogleLogin = user?.email.contains('gmail') ?? false; // Simplified detection
+    final isGoogleLogin = user?.email.contains('gmail') ?? false;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -155,11 +165,257 @@ class SecurityScreen extends StatelessWidget {
               ),
             ]),
 
+            const SizedBox(height: 16),
+
+            // ─── ZONA BERBAHAYA ───────────────────────────────────────────
+            _buildSectionHeader('ZONA BERBAHAYA'),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.delete_forever_outlined,
+                    color: Colors.red.shade600,
+                    size: 22,
+                  ),
+                ),
+                title: Text(
+                  'Hapus Akun',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Hapus permanen akun dan semua data Anda',
+                  style: TextStyle(fontSize: 12),
+                ),
+                trailing: _isDeletingAccount
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.red.shade600,
+                        ),
+                      )
+                    : Icon(Icons.chevron_right, color: Colors.red.shade300),
+                onTap: _isDeletingAccount
+                    ? null
+                    : () => _showDeleteAccountDialog(context, authProvider),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+
             const SizedBox(height: 100),
           ],
         ),
       ),
     );
+  }
+
+  // ─── Hapus Akun ───────────────────────────────────────────────────────────
+
+  Future<void> _showDeleteAccountDialog(
+    BuildContext context,
+    AuthProvider authProvider,
+  ) async {
+    // Step 1: Warning dialog
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(
+          Icons.warning_amber_rounded,
+          color: Colors.red.shade600,
+          size: 48,
+        ),
+        title: const Text(
+          'Hapus Akun?',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Tindakan ini tidak dapat dibatalkan. Yang akan dihapus:',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 10),
+            ...[
+              '• Data profil, foto, dan nomor HP',
+              '• FCM token, sesi login, dan notifikasi',
+              '• Keranjang, wishlist, dan data KYC',
+            ].map(
+              (t) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  t,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Riwayat pesanan dan ulasan produk tetap tersimpan secara anonim untuk menjaga integritas marketplace.',
+                style: TextStyle(fontSize: 11, color: Colors.blue.shade800),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text(
+              'Lanjutkan',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (proceed != true || !mounted) return;
+
+    // Step 2: Konfirmasi ketik teks
+    final confirmController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Konfirmasi Penghapusan'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Ketik HAPUS AKUN SAYA untuk mengkonfirmasi:',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: confirmController,
+              decoration: const InputDecoration(
+                hintText: 'HAPUS AKUN SAYA',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              textCapitalization: TextCapitalization.characters,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (confirmController.text.trim() == 'HAPUS AKUN SAYA') {
+                Navigator.pop(ctx, true);
+              } else {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(
+                    content: Text('Teks konfirmasi tidak sesuai'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text(
+              'Hapus Akun',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    // Step 3: Panggil API
+    setState(() => _isDeletingAccount = true);
+    try {
+      final token = authProvider.token!;
+      final response = await http.delete(
+        Uri.parse('${ApiConfig.baseUrl}/api/users/me/delete-account'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'confirmText': 'HAPUS AKUN SAYA'}),
+      );
+
+      if (!mounted) return;
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        // Logout lokal
+        await authProvider.logout();
+        if (!mounted) return;
+        // Navigasi ke root
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Akun berhasil dihapus. Sampai jumpa!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(body['error'] ?? 'Gagal menghapus akun'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDeletingAccount = false);
+    }
   }
 
   Widget _buildSectionHeader(String title) {
@@ -260,7 +516,9 @@ class SecurityScreen extends StatelessWidget {
                           item.subtitle!,
                           style: TextStyle(
                             fontSize: 13,
-                            color: item.enabled ? Colors.grey[600] : Colors.grey,
+                            color: item.enabled
+                                ? Colors.grey[600]
+                                : Colors.grey,
                           ),
                         ),
                       )
@@ -275,11 +533,7 @@ class SecurityScreen extends StatelessWidget {
                 onTap: item.enabled ? item.onTap : null,
               ),
               if (!isLast)
-                Divider(
-                  height: 1,
-                  indent: 72,
-                  color: Colors.grey[200],
-                ),
+                Divider(height: 1, indent: 72, color: Colors.grey[200]),
             ],
           );
         }).toList(),
