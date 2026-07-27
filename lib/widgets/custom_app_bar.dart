@@ -28,42 +28,29 @@ class _CustomAppBarState extends State<CustomAppBar> {
   int _unreadCount = 0;
   int _chatUnreadCount = 0;
   bool _isLoadingCount = false;
-
-  // Static timer — hanya 1 instance di seluruh app agar tidak polling 3x
-  static Timer? _chatPollingTimer;
-  static Timer? _notifPollingTimer;
-  static int _activeInstances = 0;
+  Timer? _chatPollingTimer;
+  Timer? _notifPollingTimer;
 
   @override
   void initState() {
     super.initState();
-    _activeInstances++;
     _loadUnreadCount();
     _loadChatUnreadCount();
-    // Mulai timer hanya jika belum ada instance lain yang menjalankannya
-    if (_activeInstances == 1) {
-      _startChatPolling();
-      _startNotifPolling();
-    }
+    _startChatPolling();
+    _startNotifPolling();
   }
 
   @override
   void dispose() {
-    _activeInstances--;
-    // Hentikan timer jika tidak ada instance yang tersisa
-    if (_activeInstances == 0) {
-      _chatPollingTimer?.cancel();
-      _chatPollingTimer = null;
-      _notifPollingTimer?.cancel();
-      _notifPollingTimer = null;
-    }
+    _chatPollingTimer?.cancel();
+    _notifPollingTimer?.cancel();
     super.dispose();
   }
 
   void _startChatPolling() {
     _chatPollingTimer?.cancel();
     _chatPollingTimer = Timer.periodic(
-      const Duration(seconds: 10),
+      const Duration(seconds: 15),
       (_) => _loadChatUnreadCount(),
     );
   }
