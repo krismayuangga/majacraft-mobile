@@ -133,6 +133,12 @@ class AuthProvider with ChangeNotifier {
 
   // Logout
   Future<void> logout() async {
+    // Unregister FCM token sebelum logout
+    if (_token != null) {
+      try {
+        await FCMService().unregisterTokenFromBackend(_token!);
+      } catch (_) {}
+    }
     await _authService.logout();
     _user = null;
     _token = null;

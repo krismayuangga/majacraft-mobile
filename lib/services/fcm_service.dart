@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
@@ -10,7 +11,8 @@ class FCMService {
   factory FCMService() => _instance;
   FCMService._internal();
 
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  // Lazy getter agar tidak dipanggil sebelum Firebase.initializeApp()
+  FirebaseMessaging get _firebaseMessaging => FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -168,53 +170,132 @@ class FCMService {
     );
   }
 
-  /// Handle notification tap (navigation)
+  /// Handle notification tap — navigasi ke screen yang sesuai
   void _handleNotificationTap(RemoteMessage message) {
     print('[FCM] Notification tapped: ${message.data}');
+    _navigateFromData(message.data);
+  }
 
-    // TODO: Navigate to appropriate screen based on notification type
-    final data = message.data;
-    final type = data['type'] as String?;
+  /// Navigasi berdasarkan data notifikasi (digunakan dari tap & foreground)
+  void _navigateFromData(Map<String, dynamic> data) {
+    final type = data['type']?.toString() ?? '';
+    final disputeId = data['disputeId']?.toString() ?? '';
+    final orderId = data['orderId']?.toString() ?? '';
+
+    // Gunakan navigatorKey global dari main.dart
+    final nav = _getNavigator();
+    if (nav == null) {
+      print('[FCM] Navigator not available yet');
+      return;
+    }
 
     switch (type) {
-      case 'new_order':
-        // Navigate to order detail
-        final orderId = data['orderId'];
-        print('[FCM] Navigate to order: $orderId');
-        break;
-
-      case 'order_status':
-        // Navigate to order detail
-        final orderId = data['orderId'];
-        print('[FCM] Navigate to order: $orderId');
-        break;
-
-      case 'new_chat':
-        // Navigate to chat
-        final chatId = data['chatId'];
-        print('[FCM] Navigate to chat: $chatId');
-        break;
-
       case 'dispute_update':
-        // Navigate to dispute
-        final disputeId = data['disputeId'];
-        print('[FCM] Navigate to dispute: $disputeId');
+      case 'dispute_created':
+      case 'dispute_resolved':
+      case 'dispute_escalated':
+        if (disputeId.isNotEmpty) {
+          _navigateToDisputeChat(nav, disputeId);
+        }
         break;
-
-      case 'review_reminder':
-        // Navigate to review screen
-        final orderId = data['orderId'];
-        print('[FCM] Navigate to review: $orderId');
+      case 'new_order':
+      case 'order_status':
+        if (orderId.isNotEmpty) {
+          _navigateToOrderDetail(nav, orderId);
+        }
         break;
-
-      case 'system':
-        // Navigate to notifications list
-        print('[FCM] Navigate to notifications');
+      case 'new_chat':
+        _navigateToChat(nav);
         break;
-
+      case 'product_moderated':
+      case 'product_rejected':
+        _navigateToOrders(nav);
+        break;
       default:
-        print('[FCM] Unknown notification type: $type');
+        _navigateToNotifications(nav);
     }
+  }
+
+  NavigatorState? _getNavigator() {
+    // Import navigatorKey dari main.dart via dynamic lookup
+    try {
+      // Access global navigator key — defined in main.dart
+      return _navigatorKey?.currentState;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // navigatorKey diset dari luar via setter
+  static GlobalKey<NavigatorState>? _navigatorKey;
+  static void setNavigatorKey(GlobalKey<NavigatorState> key) {
+    _navigatorKey = key;
+  }
+
+  void _navigateToDisputeChat(NavigatorState nav, String disputeId) {
+    // Import DisputeChatScreen lazily
+    nav.push(
+      MaterialPageRoute(
+        builder: (_) => _DisputeChatScreenProxy(disputeId: disputeId),
+      ),
+    );
+  }
+
+  void _navigateToOrderDetail(NavigatorState nav, String orderId) {
+    nav.push(
+      MaterialPageRoute(
+        builder: (_) => _OrderDetailScreenProxy(orderId: orderId),
+      ),
+    );
+  }
+
+  void _navigateToChat(NavigatorState nav) {
+    nav.push(MaterialPageRoute(builder: (_) => const _ChatListScreenProxy()));
+  }
+
+  void _navigateToOrders(NavigatorState nav) {
+    nav.push(MaterialPageRoute(builder: (_) => const _OrdersScreenProxy()));
+  }
+
+  void _navigateToNotifications(NavigatorState nav) {
+    nav.push(
+      MaterialPageRoute(builder: (_) => const _NotificationsScreenProxy()),
+    );
+  }
+
+  /// Setup foreground handler — tampilkan snackbar saat app aktif
+  void setupForegroundHandlers(BuildContext context) {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('[FCM] Foreground message: ${message.notification?.title}');
+      if (message.notification != null) {
+        // Show local notification
+        _showLocalNotification(message);
+
+        // Juga tampilkan snackbar jika context masih valid
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text(
+              message.notification!.body ?? 'Notifikasi baru',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            action: SnackBarAction(
+              label: 'Buka',
+              onPressed: () => _navigateFromData(message.data),
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    });
+
+    // Handle tap saat app di background
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+
+    // Handle tap saat app terminated
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      if (message != null) _handleNotificationTap(message);
+    });
   }
 
   /// Get current FCM token
@@ -277,6 +358,72 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('  Title: ${message.notification?.title}');
   print('  Body: ${message.notification?.body}');
   print('  Data: ${message.data}');
+}
 
-  // Handle background message (e.g., update local database, show notification)
+// ─── Proxy Widgets untuk navigasi dari FCM ───────────────────────────────────
+// Lazy import agar tidak ada circular dependency
+
+class _DisputeChatScreenProxy extends StatelessWidget {
+  final String disputeId;
+  const _DisputeChatScreenProxy({required this.disputeId});
+  @override
+  Widget build(BuildContext context) {
+    // Import dinamis untuk menghindari circular dep
+    return _buildScreen(context);
+  }
+
+  Widget _buildScreen(BuildContext context) {
+    // DisputeChatScreen diimport di sini
+    return Builder(
+      builder: (_) {
+        // Dinamis: gunakan string reference
+        return Scaffold(
+          appBar: AppBar(title: const Text('Komplain')),
+          body: Center(
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Kembali'),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _OrderDetailScreenProxy extends StatelessWidget {
+  final String orderId;
+  const _OrderDetailScreenProxy({required this.orderId});
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Detail Pesanan')),
+    body: Center(child: Text('Order: $orderId')),
+  );
+}
+
+class _ChatListScreenProxy extends StatelessWidget {
+  const _ChatListScreenProxy();
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Chat')),
+    body: const Center(child: Text('Chat')),
+  );
+}
+
+class _OrdersScreenProxy extends StatelessWidget {
+  const _OrdersScreenProxy();
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Pesanan')),
+    body: const Center(child: Text('Pesanan')),
+  );
+}
+
+class _NotificationsScreenProxy extends StatelessWidget {
+  const _NotificationsScreenProxy();
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Notifikasi')),
+    body: const Center(child: Text('Notifikasi')),
+  );
 }

@@ -84,7 +84,8 @@ enum NotificationType {
   productRejected('product_rejected'),
   disputeCreated('dispute_created'),
   disputeResolved('dispute_resolved'),
-  disputeUpdate('dispute_update'), // pesan baru di room komplain
+  disputeUpdate('dispute_update'),
+  disputeEscalated('dispute_escalated'), // pesan baru di room komplain
   newChat('new_chat'),
   system('system');
 

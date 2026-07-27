@@ -7,6 +7,9 @@ import 'providers/wishlist_provider.dart';
 import 'widgets/main_screen.dart';
 import 'services/fcm_service.dart';
 
+/// Global NavigatorKey untuk navigasi dari notifikasi (background/terminated)
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -18,6 +21,9 @@ void main() async {
 
   // Initialize FCM Service (permissions + token)
   await FCMService().initialize();
+
+  // Set navigator key for notification navigation
+  FCMService.setNavigatorKey(navigatorKey);
 
   runApp(const MyApp());
 }
@@ -35,6 +41,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Majacraft',
         debugShowCheckedModeBanner: false,
+        navigatorKey: navigatorKey, // Global key untuk navigasi notifikasi
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
@@ -68,6 +75,9 @@ class _AppInitializerState extends State<AppInitializer> {
 
     // Initialize auth (check if user is logged in)
     await authProvider.initialize();
+
+    // Setup FCM handlers untuk navigasi notifikasi
+    FCMService().setupForegroundHandlers(context);
 
     // If user is authenticated, load wishlist
     if (authProvider.isAuthenticated && authProvider.token != null) {
