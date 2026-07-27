@@ -4,18 +4,31 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'providers/auth_provider.dart';
 import 'providers/wishlist_provider.dart';
-import 'widgets/main_screen.dart';
-import 'services/fcm_service.dart';
+import 'utils/nav_key.dart';
 import 'screens/splash_screen.dart';
+import 'services/fcm_service.dart';
+import 'widgets/main_screen.dart';
 
-/// Global NavigatorKey untuk navigasi dari notifikasi (background/terminated)
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+// Re-export navigatorKey agar kode lain yang sudah import main.dart tetap bisa
+export 'utils/nav_key.dart' show navigatorKey;
+
+/// Background FCM handler — HARUS top-level function
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Tidak perlu inisialisasi Firebase di sini karena sudah diinit di main()
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Register background handler sebelum runApp (wajib dilakukan di main)
-  // tapi Firebase init dipindah ke SplashScreen agar UI tampil lebih cepat
+  // Firebase.initializeApp() cepat (~100-300ms) — aman di main()
+  await Firebase.initializeApp();
+
+  // onBackgroundMessage WAJIB dipanggil sebelum runApp() per Firebase docs
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // runApp() langsung — FCMService.initialize() (permission request yang lambat)
+  // dipindah ke SplashScreen agar berjalan paralel dengan animasi
   runApp(const MyApp());
 }
 
