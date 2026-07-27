@@ -28,6 +28,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   int _chatUnreadCount = 0;
   bool _isLoadingCount = false;
   Timer? _chatPollingTimer;
+  Timer? _notifPollingTimer;
 
   @override
   void initState() {
@@ -35,11 +36,13 @@ class _CustomAppBarState extends State<CustomAppBar> {
     _loadUnreadCount();
     _loadChatUnreadCount();
     _startChatPolling();
+    _startNotifPolling();
   }
 
   @override
   void dispose() {
     _chatPollingTimer?.cancel();
+    _notifPollingTimer?.cancel();
     super.dispose();
   }
 
@@ -48,6 +51,14 @@ class _CustomAppBarState extends State<CustomAppBar> {
     _chatPollingTimer = Timer.periodic(
       const Duration(seconds: 10),
       (_) => _loadChatUnreadCount(),
+    );
+  }
+
+  void _startNotifPolling() {
+    // Poll notifikasi setiap 30 detik agar badge update setelah push notification masuk
+    _notifPollingTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _loadUnreadCount(),
     );
   }
 
