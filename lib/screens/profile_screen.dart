@@ -486,6 +486,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ],
                             ),
 
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
 
                 // Stats Row - Pesanan, Ulasan, Wishlist
                 Transform.translate(
