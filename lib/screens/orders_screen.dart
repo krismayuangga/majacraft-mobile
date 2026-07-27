@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../models/order.dart';
 import '../widgets/custom_app_bar.dart';
 import 'auth/login_screen.dart';
+import 'order_detail_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -318,11 +319,10 @@ class _OrderCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to order detail
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Detail pesanan akan segera hadir'),
-              backgroundColor: Color(0xFF653611),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OrderDetailScreen(orderId: order.id),
             ),
           );
         },
@@ -521,18 +521,17 @@ class _OrderCard extends StatelessWidget {
   }
 
   Widget _buildActionButton(BuildContext context) {
+    void goToDetail() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => OrderDetailScreen(orderId: order.id)),
+      );
+    }
+
     switch (order.status) {
       case 'PENDING_PAYMENT':
         return ElevatedButton(
-          onPressed: () {
-            // TODO: Navigate to payment
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Pembayaran akan segera hadir'),
-                backgroundColor: Color(0xFF653611),
-              ),
-            );
-          },
+          onPressed: goToDetail,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF653611),
             foregroundColor: Colors.white,
@@ -549,15 +548,7 @@ class _OrderCard extends StatelessWidget {
 
       case 'SHIPPED':
         return OutlinedButton(
-          onPressed: () {
-            // TODO: Track shipment
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Tracking akan segera hadir'),
-                backgroundColor: Color(0xFF653611),
-              ),
-            );
-          },
+          onPressed: goToDetail,
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF653611),
             side: const BorderSide(color: Color(0xFF653611)),
@@ -574,17 +565,9 @@ class _OrderCard extends StatelessWidget {
 
       case 'DELIVERED':
         return ElevatedButton(
-          onPressed: () {
-            // TODO: Confirm received
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Konfirmasi penerimaan akan segera hadir'),
-                backgroundColor: Color(0xFF653611),
-              ),
-            );
-          },
+          onPressed: goToDetail,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF653611),
+            backgroundColor: const Color(0xFF4CAF50),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             shape: RoundedRectangleBorder(
@@ -599,15 +582,7 @@ class _OrderCard extends StatelessWidget {
 
       case 'COMPLETED':
         return OutlinedButton(
-          onPressed: () {
-            // TODO: Write review
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Ulasan akan segera hadir'),
-                backgroundColor: Color(0xFF653611),
-              ),
-            );
-          },
+          onPressed: goToDetail,
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF653611),
             side: const BorderSide(color: Color(0xFF653611)),

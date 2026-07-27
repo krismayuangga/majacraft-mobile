@@ -5,10 +5,14 @@ import '../models/chat.dart';
 import '../providers/wishlist_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/chat_service.dart';
+import '../services/cart_service.dart';
 import '../services/api_service.dart';
+import '../models/cart.dart';
 import 'verification_detail_screen.dart';
 import 'store_detail_screen.dart';
 import 'chat_screen.dart';
+import 'checkout_screen.dart';
+import 'auth/login_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -26,7 +30,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   late TabController _tabController;
   bool _isTogglingWishlist = false;
   bool _isOpeningChat = false;
+  bool _isAddingToCart = false;
+  bool _isBuyingNow = false;
   final ChatService _chatService = ChatService(ApiService());
+  final CartService _cartService = CartService(ApiService());
 
   @override
   void initState() {
@@ -915,7 +922,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ],
           ),
           bottomNavigationBar: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -927,173 +934,202 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               ],
             ),
             child: SafeArea(
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Chat Button
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      onPressed: _isOpeningChat ? null : _openChat,
-                      icon: _isOpeningChat
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  const Color(0xFF653611),
-                                ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.chat_bubble_outline,
-                              color: Color(0xFF653611),
-                            ),
-                      tooltip: 'Chat Penjual',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Quantity Selector
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                  // Stok info di atas
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
                     child: Row(
                       children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.remove,
-                            size: 18,
-                            color: _quantity > 1
-                                ? Colors.black87
-                                : Colors.grey.shade400,
+                        const Spacer(),
+                        Text(
+                          'Stok tersedia: ${widget.product.stock}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: widget.product.stock > 0
+                                ? Colors.grey.shade600
+                                : Colors.red,
                           ),
-                          onPressed: () {
-                            if (_quantity > 1) {
-                              setState(() => _quantity--);
-                            }
-                          },
-                        ),
-                        Container(
-                          constraints: const BoxConstraints(minWidth: 40),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _quantity.toString(),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              Text(
-                                'Stok: ${widget.product.stock}',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.add,
-                            size: 18,
-                            color: _quantity < widget.product.stock
-                                ? Colors.black87
-                                : Colors.grey.shade400,
-                          ),
-                          onPressed: () {
-                            if (_quantity < widget.product.stock) {
-                              setState(() => _quantity++);
-                            }
-                          },
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-
-                  // Cart Button
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Ditambahkan $_quantity item ke keranjang',
+                  Row(
+                    children: [
+                      // Chat Button (compact icon only)
+                      SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: OutlinedButton(
+                          onPressed: _isOpeningChat ? null : _openChat,
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            side: BorderSide(color: Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            backgroundColor: Colors.green.shade600,
-                            duration: const Duration(seconds: 2),
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                      label: const Text(
-                        'Keranjang',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF653611),
-                        side: const BorderSide(
-                          color: Color(0xFF653611),
-                          width: 2,
+                          child: _isOpeningChat
+                              ? SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: const Color(0xFF653611),
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.chat_bubble_outline,
+                                  color: Color(0xFF653611),
+                                  size: 20,
+                                ),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Quantity Selector (compact)
+                      Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Buy Button
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF7A4822), Color(0xFF653611)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Fitur checkout segera hadir'),
-                              duration: Duration(seconds: 2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 32,
+                              height: 44,
+                              child: InkWell(
+                                onTap: _quantity > 1
+                                    ? () => setState(() => _quantity--)
+                                    : null,
+                                borderRadius: const BorderRadius.horizontal(
+                                  left: Radius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 16,
+                                  color: _quantity > 1
+                                      ? Colors.black87
+                                      : Colors.grey.shade400,
+                                ),
+                              ),
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                            Container(
+                              width: 32,
+                              alignment: Alignment.center,
+                              child: Text(
+                                '$_quantity',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 32,
+                              height: 44,
+                              child: InkWell(
+                                onTap: _quantity < widget.product.stock
+                                    ? () => setState(() => _quantity++)
+                                    : null,
+                                borderRadius: const BorderRadius.horizontal(
+                                  right: Radius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 16,
+                                  color: _quantity < widget.product.stock
+                                      ? Colors.black87
+                                      : Colors.grey.shade400,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: const Text(
-                          'Beli Sekarang',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Cart Button
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: OutlinedButton.icon(
+                            onPressed: _isAddingToCart ? null : _addToCart,
+                            icon: _isAddingToCart
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFF653611),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.shopping_cart_outlined,
+                                    size: 16,
+                                  ),
+                            label: const Text(
+                              'Keranjang',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF653611),
+                              side: const BorderSide(
+                                color: Color(0xFF653611),
+                                width: 1.5,
+                              ),
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+
+                      // Buy Now Button
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: _isBuyingNow ? null : _buyNow,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF653611),
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.grey.shade300,
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: _isBuyingNow
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Beli Sekarang',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1102,6 +1138,112 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         ); // Close Consumer
       }, // Close Consumer builder
     ); // Close Consumer
+  }
+
+  // ─── Add to Cart ──────────────────────────────────────────────────────────────
+
+  Future<void> _addToCart() async {
+    final authProvider = context.read<AuthProvider>();
+
+    if (!authProvider.isAuthenticated) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+
+    setState(() => _isAddingToCart = true);
+
+    try {
+      await _cartService.addToCart(
+        productId: widget.product.id,
+        qty: _quantity,
+        token: authProvider.token!,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ditambahkan $_quantity item ke keranjang'),
+            backgroundColor: Colors.green.shade600,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isAddingToCart = false);
+    }
+  }
+
+  // ─── Buy Now (langsung ke checkout tanpa keranjang) ───────────────────────────
+
+  Future<void> _buyNow() async {
+    final authProvider = context.read<AuthProvider>();
+
+    if (!authProvider.isAuthenticated) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+
+    setState(() => _isBuyingNow = true);
+
+    try {
+      // Tambah dulu ke cart, lalu langsung buka checkout dengan item ini
+      await _cartService.addToCart(
+        productId: widget.product.id,
+        qty: _quantity,
+        token: authProvider.token!,
+      );
+
+      if (!mounted) return;
+
+      // Buat CartItem sementara untuk checkout langsung
+      final tempItem = CartItem(
+        id: 'temp',
+        productId: widget.product.id,
+        productName: widget.product.name,
+        productSlug: widget.product.slug,
+        productImage: widget.product.images.isNotEmpty
+            ? widget.product.images[0]
+            : widget.product.image,
+        price: widget.product.price.toInt(),
+        originalPrice: widget.product.originalPrice?.toInt(),
+        quantity: _quantity,
+        stock: widget.product.stock,
+        weight: (widget.product.weight ?? 500).toInt(),
+      );
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CheckoutScreen(selectedItems: [tempItem]),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isBuyingNow = false);
+    }
   }
 
   void _showCertificateModal() {

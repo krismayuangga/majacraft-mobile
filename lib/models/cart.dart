@@ -6,11 +6,14 @@ class CartItem {
   final String productImage;
   final int price;
   final int? originalPrice;
-  final int quantity;
+  final int quantity; // maps from json 'qty'
   final int stock;
+  final int weight; // gram, for shipping calculation
   final String? storeId;
   final String? storeName;
+  final String? storeProvince;
   final bool isAvailable;
+  final DateTime? addedAt; // for 20-min countdown timer
 
   CartItem({
     required this.id,
@@ -22,9 +25,12 @@ class CartItem {
     this.originalPrice,
     required this.quantity,
     required this.stock,
+    this.weight = 500,
     this.storeId,
     this.storeName,
+    this.storeProvince,
     this.isAvailable = true,
+    this.addedAt,
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
@@ -40,14 +46,29 @@ class CartItem {
           (product['images'] is List && (product['images'] as List).isNotEmpty)
           ? (product['images'][0]['url']?.toString() ?? '')
           : '',
-      price: product['price'] ?? 0,
-      originalPrice: product['originalPrice'],
-      quantity: json['quantity'] ?? 1,
-      stock: product['stock'] ?? 0,
+      price: _parseInt(product['price']),
+      originalPrice: product['originalPrice'] != null
+          ? _parseInt(product['originalPrice'])
+          : null,
+      quantity: _parseInt(json['qty'] ?? json['quantity']), // API uses 'qty'
+      stock: _parseInt(product['stock']),
+      weight: _parseInt(product['weight'] ?? 500),
       storeId: store['id']?.toString(),
       storeName: store['name']?.toString(),
-      isAvailable: product['isActive'] ?? true,
+      storeProvince: store['province']?.toString(),
+      isAvailable:
+          product['isActive'] != false && product['isSoldOffline'] != true,
+      addedAt: json['addedAt'] != null
+          ? DateTime.tryParse(json['addedAt'].toString())
+          : null,
     );
+  }
+
+  static int _parseInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
   }
 
   int get subtotal => price * quantity;
@@ -57,6 +78,17 @@ class CartItem {
 
   int? get discount =>
       originalSubtotal != null ? originalSubtotal! - subtotal : null;
+
+  /// Menit tersisa sebelum item expired (max 20 menit dari addedAt)
+  int get minutesRemaining {
+    if (addedAt == null) return 20;
+    final diff = addedAt!
+        .add(const Duration(minutes: 20))
+        .difference(DateTime.now());
+    return diff.inMinutes.clamp(0, 20);
+  }
+
+  bool get isExpired => minutesRemaining <= 0;
 }
 
 class Cart {

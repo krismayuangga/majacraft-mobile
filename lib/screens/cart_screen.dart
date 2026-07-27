@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -6,6 +7,7 @@ import '../models/cart.dart';
 import '../widgets/custom_app_bar.dart';
 import 'auth/login_screen.dart';
 import 'products_screen.dart';
+import 'checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -20,11 +22,30 @@ class _CartScreenState extends State<CartScreen> {
   String? _error;
   Set<String> _selectedItems = {};
   bool _selectAll = false;
+  Timer? _countdownTimer; // rebuild setiap 1 detik untuk countdown
+  Timer? _refreshTimer; // reload cart setiap 60 detik
 
   @override
   void initState() {
     super.initState();
     _loadCart();
+    // Countdown: rebuild UI setiap 1 detik
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && _cart != null && _cart!.items.isNotEmpty) {
+        setState(() {});
+      }
+    });
+    // Auto-refresh cart setiap 60 detik
+    _refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted) _loadCart();
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadCart() async {
@@ -53,9 +74,16 @@ class _CartScreenState extends State<CartScreen> {
       );
 
       if (response['success'] == true && response['data'] != null) {
+        final cart = Cart.fromJson(response['data']);
         setState(() {
-          _cart = Cart.fromJson(response['data']);
+          _cart = cart;
           _isLoading = false;
+          // Auto-select semua item yang tersedia
+          _selectedItems = cart.items
+              .where((i) => i.isAvailable)
+              .map((i) => i.id)
+              .toSet();
+          _selectAll = _selectedItems.length == cart.items.length;
         });
       } else {
         setState(() {
@@ -80,7 +108,7 @@ class _CartScreenState extends State<CartScreen> {
 
       await ApiService().patch(
         '/api/cart',
-        body: {'cartItemId': cartItemId, 'quantity': newQty},
+        body: {'cartItemId': cartItemId, 'qty': newQty},
         token: authProvider.token,
       );
 
@@ -173,13 +201,16 @@ class _CartScreenState extends State<CartScreen> {
       return;
     }
 
-    // TODO: Navigate to checkout screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fitur checkout akan segera hadir'),
-        backgroundColor: Color(0xFF653611),
+    final selectedCartItems = _cart!.items
+        .where((item) => _selectedItems.contains(item.id))
+        .toList();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutScreen(selectedItems: selectedCartItems),
       ),
-    );
+    ).then((_) => _loadCart()); // Refresh cart after checkout
   }
 
   @override
@@ -350,6 +381,47 @@ class _CartScreenState extends State<CartScreen> {
 
                     const Divider(height: 1),
 
+                    // Warning banner jika ada item < 5 menit
+                    Builder(
+                      builder: (context) {
+                        final urgentItems = _cart!.items
+                            .where(
+                              (i) =>
+                                  i.addedAt != null && i.minutesRemaining <= 5,
+                            )
+                            .toList();
+                        if (urgentItems.isEmpty) return const SizedBox.shrink();
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          color: Colors.orange.shade50,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.timer_outlined,
+                                color: Colors.orange.shade700,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Segera checkout! ${urgentItems.length} item akan habis dalam < 5 menit',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.orange.shade800,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+
                     // Cart Items
                     Expanded(
                       child: RefreshIndicator(
@@ -499,7 +571,9 @@ class _CartItemCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                item.productImage,
+                item.productImage.startsWith('http')
+                    ? item.productImage
+                    : 'https://majacraft.id${item.productImage}',
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,
@@ -657,6 +731,12 @@ class _CartItemCard extends StatelessWidget {
                     ],
                   ),
 
+                  // Countdown timer (dari addedAt)
+                  if (item.addedAt != null) ...[
+                    const SizedBox(height: 10),
+                    _CartItemTimer(item: item),
+                  ],
+
                   // Stock warning
                   if (item.quantity >= item.stock)
                     Padding(
@@ -689,6 +769,162 @@ class _CartItemCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─── Cart Item Timer Widget ───────────────────────────────────────────────────
+
+class _CartItemTimer extends StatefulWidget {
+  final CartItem item;
+  const _CartItemTimer({required this.item});
+
+  @override
+  State<_CartItemTimer> createState() => _CartItemTimerState();
+}
+
+class _CartItemTimerState extends State<_CartItemTimer> {
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final expireAt = widget.item.addedAt!.add(const Duration(minutes: 20));
+    final remaining = expireAt.difference(DateTime.now());
+    final totalSeconds = 20 * 60;
+    final remainingSeconds = remaining.inSeconds.clamp(0, totalSeconds);
+    final progress = remainingSeconds / totalSeconds; // 1.0 → 0.0
+
+    final mm = remaining.inMinutes.clamp(0, 20);
+    final ss = remaining.inSeconds.clamp(0, 1200) % 60;
+    final isExpired = remaining.isNegative;
+    final isUrgent = mm <= 5 && !isExpired; // < 5 menit
+    final isWarning = mm > 5 && mm <= 10; // 5-10 menit
+
+    // Warna berdasarkan sisa waktu
+    final Color timerColor = isExpired
+        ? Colors.grey
+        : isUrgent
+        ? Colors.red.shade600
+        : isWarning
+        ? Colors.orange.shade700
+        : Colors.green.shade700;
+
+    final Color bgColor = isExpired
+        ? Colors.grey.shade100
+        : isUrgent
+        ? Colors.red.shade50
+        : isWarning
+        ? Colors.orange.shade50
+        : Colors.green.shade50;
+
+    final String timeLabel = isExpired
+        ? 'Item kedaluwarsa'
+        : isUrgent
+        ? '${mm.toString().padLeft(2, '0')}:${ss.toString().padLeft(2, '0')}'
+        : '$mm menit ${ss.toString().padLeft(2, '0')} detik';
+
+    final String statusLabel = isExpired
+        ? 'Akan dihapus dari keranjang'
+        : isUrgent
+        ? 'Segera checkout!'
+        : isWarning
+        ? 'Jangan sampai habis'
+        : 'Item aman di keranjang';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Bar + waktu
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: timerColor.withOpacity(0.25)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Baris atas: ikon + waktu | status di bawahnya
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    isExpired
+                        ? Icons.timer_off_outlined
+                        : isUrgent
+                        ? Icons.warning_amber_rounded
+                        : Icons.timer_outlined,
+                    size: 15,
+                    color: timerColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    timeLabel,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: timerColor,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      statusLabel,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: timerColor,
+                        fontWeight: isUrgent
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                      textAlign: TextAlign.end,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              // Progress bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: isExpired ? 0 : progress,
+                  minHeight: 5,
+                  backgroundColor: timerColor.withOpacity(0.15),
+                  valueColor: AlwaysStoppedAnimation<Color>(timerColor),
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Keterangan
+              Text(
+                isExpired
+                    ? 'Item ini telah kedaluwarsa dan akan segera dihapus dari keranjang Anda.'
+                    : 'Item di keranjang disimpan selama 20 menit. Jika tidak checkout, item akan dihapus otomatis agar pembeli lain dapat berbelanja.',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: timerColor.withOpacity(0.8),
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
