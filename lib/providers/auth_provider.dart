@@ -159,6 +159,19 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Refresh data user terbaru dari server (dipakai setelah upgrade ke seller)
+  Future<void> refreshUserData() async {
+    if (_token == null) return;
+    try {
+      final response = await _authService.refreshUser(_token!);
+      if (response != null) {
+        _user = response;
+        await _authService.saveUser(_user!);
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
   // Update KYC Status
   Future<void> updateKycStatus(String kycStatus) async {
     if (_user == null) return;

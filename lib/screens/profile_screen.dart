@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/main_screen.dart';
+import '../widgets/upgrade_to_seller_dialog.dart';
 import 'auth/login_screen.dart';
 import 'kyc_screen.dart';
 import 'wishlist_screen.dart';
@@ -177,7 +178,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ClipPath(
                       clipper: _ProfileHeaderClipper(),
                       child: Container(
-                        height: 200,
+                        // Tinggi header disesuaikan: lebih besar jika ada tombol aksi
+                        height: user.role == 'seller' ? 240 : 280,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
@@ -486,13 +488,156 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ],
                             ),
 
+                            // ─── Tombol aksi di dalam header ─────────────
+                            const SizedBox(height: 16),
+                            // BUYER: "Jadi Seniman" + "Verifikasi Akun"
+                            if (user.role != 'seller' && user.role != 'SELLER')
+                              Row(
+                                children: [
+                                  // Tombol Jadi Seniman
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () => showUpgradeToSellerDialog(
+                                        context,
+                                        onSuccess: () => setState(() {}),
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 9,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFFD4A020),
+                                              Color(0xFF8B6000),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: const [
+                                            Icon(
+                                              Icons.trending_up,
+                                              size: 14,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(width: 5),
+                                            Text(
+                                              'Jadi Seniman',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Tombol Verifikasi Akun (hilang jika sudah VERIFIED)
+                                  if (user.kycStatus != 'VERIFIED') ...[
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => _navigateToKYC(context),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 9,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(
+                                              0.12,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.white.withOpacity(
+                                                0.4,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: const [
+                                              Icon(
+                                                Icons.shield_outlined,
+                                                size: 14,
+                                                color: Colors.white,
+                                              ),
+                                              SizedBox(width: 5),
+                                              Text(
+                                                'Verifikasi Akun',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            // SELLER: "Buka Studio"
+                            if (user.role == 'seller' || user.role == 'SELLER')
+                              GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const StudioScreen(),
+                                  ),
+                                ),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 9,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFFD4A020),
+                                        Color(0xFF8B6000),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(
+                                        Icons.store,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'Buka Studio',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
                     ),
                   ],
                 ),
-
 
                 // Stats Row - Pesanan, Ulasan, Wishlist
                 Transform.translate(

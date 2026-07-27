@@ -156,7 +156,20 @@ class AuthService {
   Future<void> saveUser(User user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(ApiConfig.userKey, user.toJsonString());
-    print('[Auth] User data updated in storage');
+  }
+
+  /// Refresh data user terbaru dari server
+  Future<User?> refreshUser(String token) async {
+    try {
+      final response = await _apiService.get(ApiConfig.profile, token: token);
+      final data = _extractData(response);
+      if (data['id'] != null) {
+        return User.fromJson(data);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 
   // Check if user is authenticated
