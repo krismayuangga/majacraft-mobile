@@ -485,6 +485,166 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ],
                             ),
+
+                            // ─── Action buttons untuk BUYER ──────────────
+                            if (user.role != 'seller') ...[
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () => _navigateToKYC(context),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 9,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFFD4A020),
+                                              Color(0xFF8B6000),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: const [
+                                            Icon(
+                                              Icons.trending_up,
+                                              size: 14,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(width: 5),
+                                            Text(
+                                              'Jadi Seniman',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        if (user.kycStatus == 'VERIFIED') {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Akun Anda sudah terverifikasi',
+                                              ),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        } else {
+                                          _navigateToKYC(context);
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 9,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.white.withOpacity(
+                                              0.5,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              user.kycStatus == 'VERIFIED'
+                                                  ? Icons.verified_user
+                                                  : Icons.shield_outlined,
+                                              size: 14,
+                                              color: Colors.white,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              user.kycStatus == 'VERIFIED'
+                                                  ? 'Terverifikasi ✓'
+                                                  : 'Verifikasi Akun',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
+                            // ─── Button untuk SELLER ─────────────────────
+                            if (user.role == 'seller') ...[
+                              const SizedBox(height: 14),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const StudioScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 9,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFFD4A020),
+                                        Color(0xFF8B6000),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(
+                                        Icons.store,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'Buka Studio Seniman',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -689,15 +849,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _MenuItem(
                             icon: Icons.palette_outlined,
                             title: 'Jadi Seniman',
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Fitur upgrade ke seniman akan segera hadir',
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: () => _navigateToKYC(context),
                           ),
                         _MenuItem(
                           icon: user.kycStatus == 'VERIFIED'
