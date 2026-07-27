@@ -48,9 +48,15 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await _authService.login(email, password);
 
-      _token = response['token'];
-      _user = User.fromJson(response['user']);
-      _registerFCMToken(_token!); // non-blocking
+      final token = response['token'] as String?;
+      final userData = response['user'];
+      if (token == null || userData == null) {
+        throw Exception('Respons login tidak valid dari server');
+      }
+
+      _token = token;
+      _user = User.fromJson(userData as Map<String, dynamic>);
+      _registerFCMToken(_token!);
 
       _isLoading = false;
       notifyListeners();
@@ -117,8 +123,15 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await _authService.signInWithGoogle();
 
-      _token = response['token'];
-      _user = User.fromJson(response['user']);
+      final token = response['token'] as String?;
+      final userData = response['user'];
+      if (token == null || userData == null) {
+        throw Exception('Respons Google login tidak valid');
+      }
+
+      _token = token;
+      _user = User.fromJson(userData as Map<String, dynamic>);
+      _registerFCMToken(_token!);
 
       _isLoading = false;
       notifyListeners();

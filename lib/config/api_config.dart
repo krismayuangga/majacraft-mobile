@@ -5,7 +5,7 @@ class ApiConfig {
   // API Endpoints
   static const String login = '/api/auth/mobile/login';
   static const String register = '/api/auth/mobile/register';
-  static const String googleAuth = '/api/auth/google';
+  static const String googleAuth = '/api/auth/mobile/google';
   static const String profile = '/api/users/me';
   static const String changePassword = '/api/users/change-password';
   static const String products = '/api/products';

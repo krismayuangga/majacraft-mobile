@@ -20,25 +20,24 @@ class AuthService {
   // Login with email & password
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      print('[Auth] Logging in with: $email');
       final response = await _apiService.post(
         ApiConfig.login,
         body: {'email': email, 'password': password},
       );
 
-      print('[Auth] Login response: $response');
-      print('[Auth] Token: ${response['token']}');
-      print('[Auth] User data: ${response['user']}');
+      // Handle both flat {token, user} and wrapped {data: {token, user}} response
+      final data = _extractData(response);
 
-      // Save token and user data
-      if (response['token'] != null && response['user'] != null) {
-        await _saveAuthData(response['token'], response['user']);
+      if (data['token'] != null && data['user'] != null) {
+        await _saveAuthData(
+          data['token'] as String,
+          data['user'] as Map<String, dynamic>,
+        );
       }
 
-      return response;
+      return data;
     } catch (e) {
-      print('[Auth] Login error: $e');
-      throw Exception('Login failed: $e');
+      throw Exception('Login gagal: $e');
     }
   }
 
@@ -54,48 +53,65 @@ class AuthService {
         body: {'name': name, 'email': email, 'password': password},
       );
 
-      // Save token and user data
-      if (response['token'] != null && response['user'] != null) {
-        await _saveAuthData(response['token'], response['user']);
+      final data = _extractData(response);
+      if (data['token'] != null && data['user'] != null) {
+        await _saveAuthData(
+          data['token'] as String,
+          data['user'] as Map<String, dynamic>,
+        );
       }
 
-      return response;
+      return data;
     } catch (e) {
-      throw Exception('Registration failed: $e');
+      throw Exception('Registrasi gagal: $e');
     }
   }
 
   // Google Sign-In
   Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
-      // Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
       if (googleUser == null) {
-        throw Exception('Google sign-in cancelled');
+        throw Exception('Google sign-in dibatalkan');
       }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
 
-      // Send to backend
-      final response = await _apiService.post(
-        ApiConfig.googleAuth,
-        body: {
-          'idToken': googleAuth.idToken,
-          'accessToken': googleAuth.accessToken,
-        },
-      );
-
-      // Save token and user data
-      if (response['token'] != null && response['user'] != null) {
-        await _saveAuthData(response['token'], response['user']);
+      if (idToken == null) {
+        throw Exception(
+          'Gagal mendapatkan ID token dari Google. Pastikan SHA-1 sudah dikonfigurasi di Google Console.',
+        );
       }
 
-      return response;
+      // Kirim hanya idToken sesuai dokumentasi backend
+      final response = await _apiService.post(
+        ApiConfig.googleAuth,
+        body: {'idToken': idToken},
+      );
+
+      final data = _extractData(response);
+
+      if (data['token'] != null && data['user'] != null) {
+        await _saveAuthData(
+          data['token'] as String,
+          data['user'] as Map<String, dynamic>,
+        );
+      }
+
+      return data;
     } catch (e) {
-      throw Exception('Google sign-in failed: $e');
+      throw Exception('Google sign-in gagal: $e');
     }
+  }
+
+  /// Ekstrak data dari response — handle flat {token,user} atau wrapped {data:{token,user}}
+  Map<String, dynamic> _extractData(Map<String, dynamic> response) {
+    if (response.containsKey('data') && response['data'] is Map) {
+      return response['data'] as Map<String, dynamic>;
+    }
+    return response;
   }
 
   // Save auth data to local storage
@@ -156,19 +172,16 @@ class AuthService {
   }) async {
     try {
       print('[Auth] Changing password...');
-      
+
       // Get current token for authentication
       final token = await getToken();
       if (token == null) {
         throw Exception('Token tidak ditemukan. Silakan login kembali.');
       }
-      
+
       final response = await _apiService.post(
         ApiConfig.changePassword,
-        body: {
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
-        },
+        body: {'currentPassword': currentPassword, 'newPassword': newPassword},
         token: token,
       );
 
@@ -176,7 +189,9 @@ class AuthService {
       return true;
     } catch (e) {
       print('[Auth] Change password error: $e');
-      throw Exception('Gagal mengubah password: ${e.toString().replaceAll('Exception: ', '')}');
+      throw Exception(
+        'Gagal mengubah password: ${e.toString().replaceAll('Exception: ', '')}',
+      );
     }
   }
 
