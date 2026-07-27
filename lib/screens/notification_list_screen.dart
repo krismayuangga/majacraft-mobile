@@ -163,6 +163,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
 
       case NotificationType.disputeCreated:
       case NotificationType.disputeResolved:
+      case NotificationType.disputeUpdate:
         // Pop notification screen and switch to Orders tab (disputes are order-related)
         Navigator.of(context).pop();
         if (isSeller) {
@@ -197,6 +198,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         return Icons.inventory_2_outlined;
       case NotificationType.disputeCreated:
       case NotificationType.disputeResolved:
+      case NotificationType.disputeUpdate:
         return Icons.gavel;
       case NotificationType.newChat:
         return Icons.chat_bubble_outline;
@@ -218,6 +220,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         return Colors.orange;
       case NotificationType.disputeResolved:
         return Colors.green;
+      case NotificationType.disputeUpdate:
+        return Colors.purple;
       case NotificationType.newChat:
         return Colors.blue;
       case NotificationType.system:

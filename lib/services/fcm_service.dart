@@ -237,7 +237,7 @@ class FCMService {
     try {
       final apiService = ApiService();
       final response = await apiService.post(
-        '/user/fcm-token',
+        '/api/mobile/fcm-token',
         body: {'fcmToken': token},
         token: authToken,
       );

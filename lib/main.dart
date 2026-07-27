@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'providers/auth_provider.dart';
 import 'providers/wishlist_provider.dart';
 import 'widgets/main_screen.dart';
+import 'services/fcm_service.dart';
 
 void main() async {
-  // Ensure Flutter bindings are initialized before any async operations
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Register background message handler BEFORE runApp
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Initialize FCM Service (permissions + token)
+  await FCMService().initialize();
 
   runApp(const MyApp());
 }

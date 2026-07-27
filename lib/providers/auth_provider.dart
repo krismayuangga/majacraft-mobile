@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
+import '../services/fcm_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -27,6 +28,8 @@ class AuthProvider with ChangeNotifier {
       _token = await _authService.getToken();
       _user = await _authService.getUser();
       print('[AuthProvider] Session restored. User: ${_user?.email}');
+      if (_token != null)
+        _registerFCMToken(_token!); // re-register on app start
     } catch (e) {
       print('[AuthProvider] No saved session: $e');
       // No saved session is OK, user will need to login
@@ -47,6 +50,7 @@ class AuthProvider with ChangeNotifier {
 
       _token = response['token'];
       _user = User.fromJson(response['user']);
+      _registerFCMToken(_token!); // non-blocking
 
       _isLoading = false;
       notifyListeners();
@@ -56,6 +60,20 @@ class AuthProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Daftarkan FCM token ke backend setelah login
+  Future<void> _registerFCMToken(String authToken) async {
+    try {
+      final fcm = FCMService();
+      final fcmToken = fcm.fcmToken ?? await fcm.getLocalFCMToken();
+      if (fcmToken != null) {
+        await fcm.registerTokenWithBackend(fcmToken, authToken);
+        print('[AuthProvider] FCM token registered');
+      }
+    } catch (e) {
+      print('[AuthProvider] FCM token registration failed: $e');
     }
   }
 
