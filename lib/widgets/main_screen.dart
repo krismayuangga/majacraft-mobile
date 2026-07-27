@@ -21,13 +21,20 @@ class _MainScreenState extends State<MainScreen> {
   final GlobalKey<ProductsScreenState> _productsScreenKey =
       GlobalKey<ProductsScreenState>();
 
-  late final List<Widget> _screens;
+  late List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+    _buildScreens();
+  }
+
+  void _buildScreens() {
     _screens = [
-      const HomeScreen(),
+      HomeScreen(
+        onNavigateToProducts: goToProducts,
+        onSearchTap: goToProductsWithSearch,
+      ),
       ProductsScreen(key: _productsScreenKey, autoFocusSearch: false),
       const CartScreen(),
       const OrdersScreen(),
@@ -50,10 +57,32 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  // Method untuk switch ke tab products tanpa filter
-  void goToProducts() {
+  // Method untuk switch ke tab products dengan filter tertentu
+  void goToProducts({
+    bool? initialFeatured,
+    bool? initialCertified,
+    bool? initialFlashSale,
+    String? initialSort,
+  }) {
+    print(
+      '[MainScreen] goToProducts called - featured: $initialFeatured, certified: $initialCertified, flashSale: $initialFlashSale, sort: $initialSort',
+    );
+
     setState(() {
       _currentIndex = 1;
+    });
+
+    // Apply filters after tab switch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        print('[MainScreen] Applying filters to ProductsScreen');
+        _productsScreenKey.currentState?.applyFilters(
+          featured: initialFeatured,
+          certified: initialCertified,
+          flashSale: initialFlashSale,
+          sort: initialSort,
+        );
+      });
     });
   }
 
@@ -92,7 +121,7 @@ class _MainScreenState extends State<MainScreen> {
   // Method untuk switch ke tab profile
   void goToProfile() {
     setState(() {
-      _currentIndex = 4; // Index tab "Akun"
+      _currentIndex = 4; // Index tab "Akun" (was 5 before removing chat tab)
     });
   }
 

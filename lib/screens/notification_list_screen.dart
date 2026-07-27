@@ -5,6 +5,7 @@ import '../models/notification.dart';
 import '../services/notification_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/main_screen.dart';
+import 'chat_list_screen.dart';
 
 class NotificationListScreen extends StatefulWidget {
   const NotificationListScreen({Key? key}) : super(key: key);
@@ -172,9 +173,11 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         break;
 
       case NotificationType.newChat:
-        // TODO: Navigate to chat screen when implemented
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fitur chat segera hadir')),
+        // Navigate to chat list screen
+        Navigator.of(context).pop();
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ChatListScreen()),
         );
         break;
 

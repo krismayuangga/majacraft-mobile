@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
+import '../models/chat.dart';
 import '../providers/wishlist_provider.dart';
 import '../providers/auth_provider.dart';
+import '../services/chat_service.dart';
+import '../services/api_service.dart';
 import 'verification_detail_screen.dart';
+import 'store_detail_screen.dart';
+import 'chat_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -20,6 +25,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   int _currentImageIndex = 0;
   late TabController _tabController;
   bool _isTogglingWishlist = false;
+  bool _isOpeningChat = false;
+  final ChatService _chatService = ChatService(ApiService());
 
   @override
   void initState() {
@@ -76,6 +83,83 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     } finally {
       if (mounted) {
         setState(() => _isTogglingWishlist = false);
+      }
+    }
+  }
+
+  Future<void> _openChat() async {
+    final authProvider = context.read<AuthProvider>();
+    if (!authProvider.isAuthenticated || authProvider.token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan login terlebih dahulu'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    if (widget.product.sellerSlug.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Info penjual tidak tersedia'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isOpeningChat = true);
+
+    try {
+      // Get store owner info
+      final ownerInfo = await _chatService.getStoreOwner(
+        widget.product.sellerSlug,
+        token: authProvider.token,
+      );
+
+      if (ownerInfo['userId']?.isEmpty ?? true) {
+        throw Exception('Seller tidak ditemukan');
+      }
+
+      // Create or get chat
+      final chatId = await _chatService.createOrGetChat(
+        targetUserId: ownerInfo['userId']!,
+        productId: widget.product.id,
+        token: authProvider.token,
+      );
+
+      if (mounted) {
+        setState(() => _isOpeningChat = false);
+
+        // Navigate to chat screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(
+              chatId: chatId,
+              otherUser: ChatUser(
+                id: ownerInfo['userId']!,
+                name: ownerInfo['storeName'] ?? 'Penjual',
+                image: widget.product.sellerLogoUrl,
+              ),
+              productName: widget.product.name,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('[ProductDetail] Error opening chat: $e');
+      if (mounted) {
+        setState(() => _isOpeningChat = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membuka chat: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
     }
   }
@@ -433,14 +517,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                         CircleAvatar(
                           radius: 24,
                           backgroundColor: Colors.brown.shade100,
-                          child: Text(
-                            widget.product.sellerName[0].toUpperCase(),
-                            style: TextStyle(
-                              color: Colors.brown.shade700,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
+                          backgroundImage: widget.product.sellerLogoUrl != null
+                              ? NetworkImage(
+                                  'https://majacraft.id${widget.product.sellerLogoUrl}',
+                                )
+                              : null,
+                          child: widget.product.sellerLogoUrl == null
+                              ? Text(
+                                  widget.product.sellerName[0].toUpperCase(),
+                                  style: TextStyle(
+                                    color: Colors.brown.shade700,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                  ),
+                                )
+                              : null,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -501,12 +592,39 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Fitur toko segera hadir'),
-                                  duration: Duration(seconds: 1),
-                                ),
+                              print(
+                                '🔍 DEBUG: sellerSlug = "${widget.product.sellerSlug}"',
                               );
+                              if (widget.product.sellerSlug.isNotEmpty) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => StoreDetailScreen(
+                                      storeSlug: widget.product.sellerSlug,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                print('❌ ERROR: sellerSlug is empty!');
+                                print(
+                                  '   Store name: ${widget.product.sellerName}',
+                                );
+                                print(
+                                  '   Store ID: ${widget.product.sellerId}',
+                                );
+                                print(
+                                  '   Backend API tidak mengirim store.slug!',
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Maaf, data toko belum lengkap. Backend perlu menambahkan field "slug" ke API response.',
+                                    ),
+                                    duration: Duration(seconds: 3),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                              }
                             },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF653611),
@@ -531,14 +649,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: ElevatedButton.icon(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Fitur chat segera hadir'),
-                                    duration: Duration(seconds: 1),
-                                  ),
-                                );
-                              },
+                              onPressed: _isOpeningChat ? null : _openChat,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
@@ -547,10 +658,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                   vertical: 10,
                                 ),
                               ),
-                              icon: const Icon(
-                                Icons.chat_bubble_outline,
-                                size: 16,
-                              ),
+                              icon: _isOpeningChat
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.chat_bubble_outline,
+                                      size: 16,
+                                    ),
                               label: const Text(
                                 'Chat Seniman',
                                 style: TextStyle(fontSize: 12),
@@ -809,6 +929,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             child: SafeArea(
               child: Row(
                 children: [
+                  // Chat Button
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      onPressed: _isOpeningChat ? null : _openChat,
+                      icon: _isOpeningChat
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  const Color(0xFF653611),
+                                ),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.chat_bubble_outline,
+                              color: Color(0xFF653611),
+                            ),
+                      tooltip: 'Chat Penjual',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
                   // Quantity Selector
                   Container(
                     decoration: BoxDecoration(

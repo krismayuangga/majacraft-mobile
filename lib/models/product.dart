@@ -9,6 +9,8 @@ class Product {
   final String category;
   final String sellerId;
   final String sellerName;
+  final String sellerSlug;
+  final String? sellerLogoUrl;
   final String sellerLocation;
   final double sellerRating;
   final int sold;
@@ -38,6 +40,8 @@ class Product {
     required this.category,
     required this.sellerId,
     required this.sellerName,
+    required this.sellerSlug,
+    this.sellerLogoUrl,
     required this.sellerLocation,
     required this.sellerRating,
     required this.sold,
@@ -108,6 +112,8 @@ class Product {
       category: category?['slug']?.toString() ?? '',
       sellerId: store?['id']?.toString() ?? '',
       sellerName: store?['name']?.toString() ?? '',
+      sellerSlug: store?['slug']?.toString() ?? '',
+      sellerLogoUrl: store?['logoUrl']?.toString(),
       sellerLocation: store?['province']?.toString() ?? '',
       sellerRating: _parseDouble(store?['rating']),
       sold: _parseInt(json['soldCount']),

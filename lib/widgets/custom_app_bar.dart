@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/notification_service.dart';
+import '../services/chat_service.dart';
+import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
 import '../screens/notification_list_screen.dart';
+import '../screens/chat_list_screen.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool showSearch;
@@ -19,13 +23,53 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _CustomAppBarState extends State<CustomAppBar> {
   final NotificationService _notificationService = NotificationService();
+  final ChatService _chatService = ChatService(ApiService());
   int _unreadCount = 0;
+  int _chatUnreadCount = 0;
   bool _isLoadingCount = false;
+  Timer? _chatPollingTimer;
 
   @override
   void initState() {
     super.initState();
     _loadUnreadCount();
+    _loadChatUnreadCount();
+    _startChatPolling();
+  }
+
+  @override
+  void dispose() {
+    _chatPollingTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startChatPolling() {
+    // Poll every 10 seconds for real-time updates
+    _chatPollingTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => _loadChatUnreadCount(),
+    );
+  }
+
+  Future<void> _loadChatUnreadCount() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+
+      if (token != null && authProvider.isAuthenticated) {
+        final chats = await _chatService.getChatInbox(token: token);
+        final unreadCount = _chatService.getTotalUnreadCount(chats);
+
+        if (mounted) {
+          setState(() {
+            _chatUnreadCount = unreadCount;
+          });
+        }
+      }
+    } catch (e, stack) {
+      print('[CustomAppBar] Error loading chat unread count: $e');
+      print('[CustomAppBar] Stack: $stack');
+    }
   }
 
   Future<void> _loadUnreadCount() async {
@@ -50,7 +94,9 @@ class _CustomAppBarState extends State<CustomAppBar> {
           });
         }
       }
-    } catch (e) {
+    } catch (e, stack) {
+      print('[CustomAppBar] Error loading notification unread count: $e');
+      print('[CustomAppBar] Stack: $stack');
       if (mounted) {
         setState(() => _isLoadingCount = false);
       }
@@ -136,26 +182,64 @@ class _CustomAppBarState extends State<CustomAppBar> {
 
               const SizedBox(width: 12),
 
-              // Chat Icon
-              IconButton(
-                onPressed: () {
-                  // TODO: Navigate to chat
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Fitur chat segera hadir'),
-                      backgroundColor: Color(0xFF653611),
-                      behavior: SnackBarBehavior.floating,
-                      duration: Duration(seconds: 2),
+              // Chat Icon with Badge
+              Stack(
+                children: [
+                  IconButton(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ChatListScreen(),
+                        ),
+                      );
+                      // Reload count after returning from chat screen
+                      _loadChatUnreadCount();
+                    },
+                    icon: Icon(
+                      Icons.chat_bubble_outline,
+                      color: Color(0xFFFBBF24), // amber-400 exact from website
                     ),
-                  );
-                },
-                icon: Icon(
-                  Icons.chat_bubble_outline,
-                  color: Color(0xFFFBBF24), // amber-400 exact from website
-                ),
-                iconSize: 22,
-                padding: EdgeInsets.all(8),
-                constraints: BoxConstraints(),
+                    iconSize: 22,
+                    padding: EdgeInsets.all(8),
+                    constraints: BoxConstraints(),
+                  ),
+                  if (_chatUnreadCount > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: EdgeInsets.all(_chatUnreadCount > 9 ? 2 : 0),
+                        constraints: BoxConstraints(
+                          minWidth: _chatUnreadCount > 9 ? 16 : 8,
+                          minHeight: _chatUnreadCount > 9 ? 16 : 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: _chatUnreadCount > 9
+                              ? BoxShape.rectangle
+                              : BoxShape.circle,
+                          borderRadius: _chatUnreadCount > 9
+                              ? BorderRadius.circular(8)
+                              : null,
+                        ),
+                        child: _chatUnreadCount > 9
+                            ? Center(
+                                child: Text(
+                                  _chatUnreadCount > 99
+                                      ? '99+'
+                                      : _chatUnreadCount.toString(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            : null,
+                      ),
+                    ),
+                ],
               ),
 
               const SizedBox(width: 4),

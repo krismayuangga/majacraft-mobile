@@ -8,12 +8,19 @@ import '../widgets/custom_app_bar.dart';
 import '../widgets/main_screen.dart';
 import '../models/product.dart';
 import '../services/api_service.dart';
-import '../config/api_config.dart';
 import '../providers/auth_provider.dart';
-import 'products_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final void Function({
+    bool? initialFeatured,
+    bool? initialCertified,
+    bool? initialFlashSale,
+    String? initialSort,
+  })?
+  onNavigateToProducts;
+  final VoidCallback? onSearchTap;
+
+  const HomeScreen({super.key, this.onNavigateToProducts, this.onSearchTap});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -28,7 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Product> _newProducts = [];
   List<Product> _certifiedProducts = [];
   List<Product> _flashSaleProducts = [];
-  String? _error;
 
   @override
   void initState() {
@@ -173,10 +179,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        onSearchTap: () {
-          // Switch ke tab products dengan focus search
-          mainScreenKey.currentState?.goToProductsWithSearch();
-        },
+        onSearchTap:
+            widget.onSearchTap ??
+            () {
+              // Fallback to mainScreenKey if callback not provided
+              mainScreenKey.currentState?.goToProductsWithSearch();
+            },
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -194,7 +202,11 @@ class _HomeScreenState extends State<HomeScreen> {
             const HeroBanner(),
 
             // Category Grid
-            const CategoryGrid(),
+            CategoryGrid(
+              onViewAll: () {
+                widget.onNavigateToProducts?.call();
+              },
+            ),
 
             const SizedBox(height: 12),
 
@@ -203,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
               FlashSaleBanner(
                 products: _flashSaleProducts,
                 onViewAll: () {
-                  // TODO: Navigate to flash sale page
+                  widget.onNavigateToProducts?.call(initialFlashSale: true);
                 },
               ),
 
@@ -216,6 +228,9 @@ class _HomeScreenState extends State<HomeScreen> {
               subtitle: 'Mahakarya terpilih dari seniman terbaik Nusantara',
               products: _featuredProducts,
               isLoading: _isLoadingFeatured,
+              onViewAll: () {
+                widget.onNavigateToProducts?.call(initialFeatured: true);
+              },
             ),
 
             const Divider(height: 1),
@@ -227,6 +242,9 @@ class _HomeScreenState extends State<HomeScreen> {
               subtitle: 'Karya seni terbaru yang baru saja didaftarkan',
               products: _newProducts,
               isLoading: _isLoadingNew,
+              onViewAll: () {
+                widget.onNavigateToProducts?.call(initialSort: 'terbaru');
+              },
             ),
 
             const Divider(height: 1),
@@ -238,6 +256,9 @@ class _HomeScreenState extends State<HomeScreen> {
               subtitle: 'Setiap karya dilengkapi dokumen kepemilikan resmi',
               products: _certifiedProducts,
               isLoading: _isLoadingCertified,
+              onViewAll: () {
+                widget.onNavigateToProducts?.call(initialCertified: true);
+              },
             ),
 
             const SizedBox(height: 24),
@@ -253,12 +274,14 @@ class _ProductSection extends StatelessWidget {
   final String subtitle;
   final List<Product> products;
   final bool isLoading;
+  final VoidCallback? onViewAll;
 
   const _ProductSection({
     required this.title,
     required this.subtitle,
     required this.products,
     required this.isLoading,
+    this.onViewAll,
   });
 
   @override
@@ -306,9 +329,7 @@ class _ProductSection extends StatelessWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {
-                    // TODO: Navigate to all products
-                  },
+                  onPressed: onViewAll,
                   child: const Text(
                     'Lihat Semua →',
                     style: TextStyle(

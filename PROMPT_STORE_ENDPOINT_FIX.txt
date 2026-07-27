@@ -1,0 +1,117 @@
+Hi! Endpoint GET /api/stores/[slug] masih return HTML error page (404 atau 500), bukan JSON response.
+
+PROBLEM:
+curl https://majacraft.id/api/stores/elmojo-antique
+-> Response: HTML error page (<!DOCTYPE html>...)
+-> Expected: JSON with store details
+
+CURRENT STATUS:
+❌ GET /api/stores/elmojo-antique -> HTML error
+❌ GET /api/stores/test-gallery -> HTML error
+✅ GET /api/products -> Works (sudah include store.slug)
+
+NEEDED:
+Endpoint: GET /api/stores/[slug]
+File: src/app/api/stores/[slug]/route.ts
+
+IMPLEMENTATION:
+```typescript
+import { NextRequest } from "next/server";
+import { ok, err } from "@/lib/response";
+import prisma from "@/lib/prisma";
+
+interface Params {
+  params: Promise<{ slug: string }>;
+}
+
+export async function GET(_req: NextRequest, { params }: Params) {
+  try {
+    const { slug } = await params;
+
+    const store = await prisma.store.findUnique({
+      where: {
+        slug,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        logoUrl: true,
+        bannerUrl: true,
+        province: true,
+        city: true,
+        district: true,
+        address: true,
+        phone: true,
+        rating: true,
+        totalSold: true,
+        isVerified: true,
+        isActive: true,
+        createdAt: true,
+        _count: {
+          select: {
+            products: true,
+          },
+        },
+      },
+    });
+
+    if (!store) {
+      return err("Toko tidak ditemukan", 404);
+    }
+
+    return ok(store);
+  } catch (error) {
+    console.error("[API] Error getting store:", error);
+    return err("Internal server error", 500);
+  }
+}
+```
+
+EXPECTED RESPONSE:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "cmrnk0qwk000ikrwnbdg81sqp",
+    "name": "ELmojo Antique",
+    "slug": "elmojo-antique",
+    "description": "Penyedia pot terraccota original.",
+    "logoUrl": null,
+    "bannerUrl": null,
+    "province": "JAWA TIMUR",
+    "city": "KABUPATEN MOJOKERTO",
+    "district": null,
+    "address": null,
+    "phone": null,
+    "rating": 0,
+    "totalSold": 0,
+    "isVerified": false,
+    "isActive": true,
+    "createdAt": "2024-01-15T00:00:00.000Z",
+    "_count": {
+      "products": 15
+    }
+  }
+}
+```
+
+TEST SETELAH FIX:
+```bash
+curl https://majacraft.id/api/stores/elmojo-antique
+# Harus return JSON dengan success:true, bukan HTML
+
+curl https://majacraft.id/api/stores/test-gallery
+# Harus return JSON dengan success:true, bukan HTML
+```
+
+NOTES:
+- Pastikan file berada di: src/app/api/stores/[slug]/route.ts
+- Gunakan fungsi ok() dan err() dari @/lib/response
+- Response harus format JSON, bukan HTML
+- Endpoint ini PUBLIC (tidak perlu authentication)
+- Hanya return store yang isActive: true
+
+Tolong fix endpoint ini ya, mobile app masih error karena dapat HTML response. Terima kasih! 🙏

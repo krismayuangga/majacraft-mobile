@@ -1,0 +1,71 @@
+Hi! Mobile app butuh fix urgent untuk fitur navigasi ke halaman toko.
+
+MASALAH:
+API /api/products tidak return field "slug" di dalam store object, sehingga mobile app tidak bisa navigate ke store detail page.
+
+CURRENT RESPONSE (broken):
+{
+  "store": {
+    "name": "ELmojo Antique",
+    "province": "JAWA TIMUR",
+    "isVerified": false,
+    "rating": 0
+    // ❌ missing: "slug"
+  }
+}
+
+EXPECTED RESPONSE (fixed):
+{
+  "store": {
+    "name": "ELmojo Antique",
+    "slug": "elmojo-antique",  // ✅ ADD THIS
+    "province": "JAWA TIMUR",
+    "isVerified": false,
+    "rating": 0,
+    "logoUrl": null,           // ✅ optional but recommended
+    "totalSold": 0             // ✅ optional but recommended
+  }
+}
+
+FIX NEEDED:
+File: src/app/api/products/route.ts
+
+Ubah dari:
+```typescript
+store: {
+  select: {
+    name: true,
+    province: true,
+    isVerified: true,
+    rating: true,
+  }
+}
+```
+
+Menjadi:
+```typescript
+store: {
+  select: {
+    name: true,
+    slug: true,        // ✅ ADD THIS
+    province: true,
+    isVerified: true,
+    rating: true,
+    logoUrl: true,     // ✅ optional
+    totalSold: true,   // ✅ optional
+  }
+}
+```
+
+CONTEXT:
+- Store detail endpoint /api/stores/[slug] sudah jalan dengan baik
+- Mobile UI sudah siap
+- Cuma kurang field "slug" di product API response untuk build navigation URL
+- Tombol "Kunjungi Toko" di mobile app sekarang tidak bisa navigate karena slug = empty string
+
+TEST SETELAH FIX:
+curl https://majacraft.id/api/products?limit=1
+
+Response harus include store.slug field.
+
+Tolong fix ya, mobile app feature blocked karena ini. Terima kasih! 🙏

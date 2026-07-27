@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/order.dart';
+import '../../models/chat.dart';
 import '../../services/api_service.dart';
+import '../../services/chat_service.dart';
 import '../../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import '../chat_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final Order order;
@@ -21,8 +24,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   final _trackingNumberController = TextEditingController();
   final _courierNameController = TextEditingController();
   final _courierServiceController = TextEditingController();
+  final ChatService _chatService = ChatService(ApiService());
 
   bool _isSubmitting = false;
+  bool _isOpeningChat = false;
   late Order _order;
 
   final _currencyFormat = NumberFormat.currency(
@@ -102,6 +107,86 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         setState(() {
           _isSubmitting = false;
         });
+      }
+    }
+  }
+
+  Future<void> _openChatWithBuyer() async {
+    final authProvider = context.read<AuthProvider>();
+
+    if (!authProvider.isAuthenticated || authProvider.token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan login terlebih dahulu'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // For seller-side order, we need buyer ID from API
+    // For now, we'll try to create/get chat using orderId
+    // The backend should handle finding the buyer from the order
+
+    setState(() => _isOpeningChat = true);
+
+    try {
+      // Note: We need buyerId from order. This might require API enhancement.
+      // For now, showing a placeholder message
+      // TODO: Backend needs to expose buyer info in order API
+
+      if (mounted) {
+        setState(() => _isOpeningChat = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Fitur chat dengan pembeli segera hadir. '
+              'Backend perlu menyediakan buyer ID.',
+            ),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+
+      // When buyer info is available from backend, use this code:
+      /*
+      final chatId = await _chatService.createOrGetChat(
+        targetUserId: _order.buyerId, // Need to add this field to Order model
+        orderId: _order.id,
+        token: authProvider.token,
+      );
+
+      if (mounted) {
+        setState(() => _isOpeningChat = false);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(
+              chatId: chatId,
+              otherUser: ChatUser(
+                id: _order.buyerId!,
+                name: _order.buyerName ?? _order.recipientName ?? 'Pembeli',
+                image: null,
+              ),
+              productName: _order.items.isNotEmpty 
+                ? _order.items.first.productName 
+                : '',
+            ),
+          ),
+        );
+      }
+      */
+    } catch (e) {
+      print('[OrderDetail] Error opening chat: $e');
+      if (mounted) {
+        setState(() => _isOpeningChat = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membuka chat: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
     }
   }
@@ -240,6 +325,32 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 multiline: true,
               ),
           ]),
+
+          const SizedBox(height: 12),
+
+          // Chat with Buyer Button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isOpeningChat ? null : _openChatWithBuyer,
+              icon: _isOpeningChat
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.chat_bubble_outline),
+              label: const Text('Chat Pembeli'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF653611),
+                side: const BorderSide(color: Color(0xFF653611), width: 1.5),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
 
           const SizedBox(height: 24),
 

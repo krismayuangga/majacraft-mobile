@@ -33,6 +33,8 @@ class ProductsScreenState extends State<ProductsScreen> {
   int? _minPrice;
   int? _maxPrice;
   bool _certifiedOnly = false;
+  bool _featuredOnly = false;
+  bool _flashSaleOnly = false;
 
   // UI state
   final TextEditingController _searchController = TextEditingController();
@@ -42,9 +44,6 @@ class ProductsScreenState extends State<ProductsScreen> {
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
-    _loadCategories();
-    _loadProducts();
 
     // Auto focus search if requested
     if (widget.autoFocusSearch) {
@@ -63,6 +62,25 @@ class ProductsScreenState extends State<ProductsScreen> {
     _loadProducts(refresh: true);
   }
 
+  // Method untuk apply filters dari luar (featured, certified, flash sale, sort)
+  void applyFilters({
+    bool? featured,
+    bool? certified,
+    bool? flashSale,
+    String? sort,
+  }) {
+    print(
+      '[ProductsScreen] applyFilters called - featured: $featured, certified: $certified, flashSale: $flashSale, sort: $sort',
+    );
+    setState(() {
+      if (featured != null) _featuredOnly = featured;
+      if (certified != null) _certifiedOnly = certified;
+      if (flashSale != null) _flashSaleOnly = flashSale;
+      if (sort != null) _sortBy = sort;
+    });
+    _loadProducts(refresh: true);
+  }
+
   // Method untuk clear filter
   void clearFilters() {
     setState(() {
@@ -72,6 +90,8 @@ class ProductsScreenState extends State<ProductsScreen> {
       _minPrice = null;
       _maxPrice = null;
       _certifiedOnly = false;
+      _featuredOnly = false;
+      _flashSaleOnly = false;
       _sortBy = 'terbaru';
     });
     _loadProducts(refresh: true);
@@ -154,6 +174,12 @@ class ProductsScreenState extends State<ProductsScreen> {
       if (_certifiedOnly) {
         queryParams['sertifikat'] = '1';
       }
+      if (_featuredOnly) {
+        queryParams['featured'] = '1';
+      }
+      if (_flashSaleOnly) {
+        queryParams['flashSale'] = '1';
+      }
 
       final queryString = queryParams.entries
           .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
@@ -220,6 +246,12 @@ class ProductsScreenState extends State<ProductsScreen> {
       }
       if (_certifiedOnly) {
         queryParams['sertifikat'] = '1';
+      }
+      if (_featuredOnly) {
+        queryParams['featured'] = '1';
+      }
+      if (_flashSaleOnly) {
+        queryParams['flashSale'] = '1';
       }
 
       final queryString = queryParams.entries

@@ -1,0 +1,199 @@
+Hi! Butuh 1 endpoint lagi untuk list products dari toko tertentu.
+
+ENDPOINT NEEDED:
+GET /api/stores/[slug]/products
+
+PURPOSE:
+Ambil list produk dari toko tertentu dengan pagination
+
+FILE:
+src/app/api/stores/[slug]/products/route.ts
+
+IMPLEMENTATION:
+```typescript
+import { NextRequest } from "next/server";
+import { ok, err } from "@/lib/response";
+import prisma from "@/lib/prisma";
+
+interface Params {
+  params: Promise<{ slug: string }>;
+}
+
+export async function GET(req: NextRequest, { params }: Params) {
+  try {
+    const { slug } = await params;
+    const { searchParams } = new URL(req.url);
+
+    // Get query parameters
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const category = searchParams.get("category");
+    const search = searchParams.get("search");
+    const sort = searchParams.get("sort") || "terbaru";
+
+    // Find store by slug
+    const store = await prisma.store.findUnique({
+      where: { slug, isActive: true },
+      select: { id: true },
+    });
+
+    if (!store) {
+      return err("Toko tidak ditemukan", 404);
+    }
+
+    // Build where clause
+    const where: any = {
+      storeId: store.id,
+      isActive: true,
+      isModerated: true,
+    };
+
+    if (category) {
+      where.category = { slug: category };
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    // Sort mapping
+    const orderBy: any = {};
+    switch (sort) {
+      case "terbaru":
+        orderBy.createdAt = "desc";
+        break;
+      case "terlaris":
+        orderBy.soldCount = "desc";
+        break;
+      case "harga-asc":
+        orderBy.price = "asc";
+        break;
+      case "harga-desc":
+        orderBy.price = "desc";
+        break;
+      case "rating":
+        orderBy.rating = "desc";
+        break;
+      default:
+        orderBy.createdAt = "desc";
+    }
+
+    // Get total count
+    const total = await prisma.product.count({ where });
+
+    // Get products
+    const products = await prisma.product.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        price: true,
+        originalPrice: true,
+        stock: true,
+        rating: true,
+        reviewCount: true,
+        soldCount: true,
+        images: {
+          where: { isPrimary: true },
+          select: { url: true },
+          take: 1,
+        },
+        category: {
+          select: { name: true, slug: true },
+        },
+        store: {
+          select: {
+            name: true,
+            slug: true,
+            province: true,
+            isVerified: true,
+            rating: true,
+            logoUrl: true,
+            totalSold: true,
+          },
+        },
+      },
+    });
+
+    return ok({
+      products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("[API] Error getting store products:", error);
+    return err("Internal server error", 500);
+  }
+}
+```
+
+EXPECTED RESPONSE:
+```json
+{
+  "success": true,
+  "data": {
+    "products": [
+      {
+        "id": "cmrxi2771000bkrlygbv3g8l6",
+        "name": "Gentong jawa tali air #EL-011",
+        "slug": "gentong-jawa-tali-air-el-011",
+        "price": 700000,
+        "originalPrice": null,
+        "stock": 1,
+        "rating": 0,
+        "reviewCount": 0,
+        "soldCount": 0,
+        "images": [{"url": "/uploads/products/xxx.jpg"}],
+        "category": {"name": "Keramik", "slug": "keramik"},
+        "store": {
+          "name": "ELmojo Antique",
+          "slug": "elmojo-antique",
+          "province": "JAWA TIMUR",
+          "isVerified": false,
+          "rating": 0,
+          "logoUrl": null,
+          "totalSold": 0
+        }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 15,
+      "totalPages": 1
+    }
+  }
+}
+```
+
+TEST:
+```bash
+# Basic
+curl https://majacraft.id/api/stores/elmojo-antique/products?page=1&limit=5
+
+# With sort
+curl https://majacraft.id/api/stores/elmojo-antique/products?sort=terlaris
+
+# With search
+curl https://majacraft.id/api/stores/test-gallery/products?search=patung
+```
+
+QUERY PARAMS:
+- page (default: 1)
+- limit (default: 20)
+- category (optional)
+- search (optional)
+- sort: terbaru | terlaris | harga-asc | harga-desc | rating
+
+Tolong implement endpoint ini juga ya. Terima kasih! 🙏

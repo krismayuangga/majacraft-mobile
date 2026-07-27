@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'main_screen.dart';
 
 class CategoryGrid extends StatelessWidget {
-  const CategoryGrid({super.key});
+  final VoidCallback? onViewAll;
+
+  const CategoryGrid({super.key, this.onViewAll});
 
   final List<CategoryData> categories = const [
     CategoryData(
@@ -87,10 +89,12 @@ class CategoryGrid extends StatelessWidget {
                 ],
               ),
               TextButton(
-                onPressed: () {
-                  // Switch ke tab products tanpa filter
-                  mainScreenKey.currentState?.goToProducts();
-                },
+                onPressed:
+                    onViewAll ??
+                    () {
+                      // Fallback to mainScreenKey if callback not provided
+                      mainScreenKey.currentState?.goToProducts();
+                    },
                 child: const Text(
                   'Lihat Semua →',
                   style: TextStyle(
