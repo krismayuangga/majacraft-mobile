@@ -10,6 +10,8 @@ import 'edit_profile_screen.dart';
 import 'address_list_screen.dart';
 import 'security_screen.dart';
 import 'notification_list_screen.dart';
+import 'notification_settings_screen.dart';
+import 'info_webview_screen.dart';
 import 'studio/studio_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -634,6 +636,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             );
                           },
                         ),
+                        _MenuItem(
+                          icon: Icons.tune_outlined,
+                          title: 'Pengaturan Notifikasi',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const NotificationSettingsScreen(),
+                              ),
+                            );
+                          },
+                        ),
                       ]),
                     ],
                   ),
@@ -705,12 +720,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: Icons.help_outline,
                           title: 'Bantuan',
                           onTap: () {
-                            // TODO: Navigate to help
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Fitur bantuan akan segera hadir',
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const InfoWebViewScreen(
+                                  title: 'Pusat Bantuan',
+                                  url: 'https://majacraft.id/bantuan',
                                 ),
+                              ),
+                            );
+                          },
+                        ),
+                        _MenuItem(
+                          icon: Icons.info_outline,
+                          title: 'Tentang MajaCraft',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const _TentangScreen(),
                               ),
                             );
                           },
@@ -971,4 +999,194 @@ class _ProfileHeaderClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+// ─── Tentang MajaCraft Screen ─────────────────────────────────────────────────
+
+class _TentangScreen extends StatelessWidget {
+  const _TentangScreen();
+
+  static const _baseUrl = 'https://majacraft.id';
+
+  static const _layanan = [
+    {'title': 'Cara Berbelanja', 'url': '$_baseUrl/cara-berbelanja'},
+    {'title': 'Cara Berjualan', 'url': '$_baseUrl/cara-berjualan'},
+    {'title': 'Sertifikat Phygital', 'url': '$_baseUrl/phygital'},
+    {'title': 'Ruang Budaya', 'url': '$_baseUrl/ruang-budaya'},
+    {'title': 'Program Seniman', 'url': '$_baseUrl/program-seniman'},
+    {'title': 'Pusat Bantuan', 'url': '$_baseUrl/bantuan'},
+  ];
+
+  static const _informasi = [
+    {'title': 'Tentang MajaCraft', 'url': '$_baseUrl/tentang'},
+    {'title': 'Kebijakan Privasi', 'url': '$_baseUrl/kebijakan-privasi'},
+    {'title': 'Syarat & Ketentuan', 'url': '$_baseUrl/syarat-ketentuan'},
+    {'title': 'Keamanan Transaksi', 'url': '$_baseUrl/keamanan-transaksi'},
+    {'title': 'Karir', 'url': '$_baseUrl/karir'},
+    {'title': 'Hubungi Kami', 'url': '$_baseUrl/hubungi-kami'},
+  ];
+
+  void _openPage(BuildContext context, String title, String url) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => InfoWebViewScreen(title: title, url: url),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1C1A14),
+        foregroundColor: const Color(0xFFFBBF24),
+        title: const Text(
+          'Tentang MajaCraft',
+          style: TextStyle(
+            color: Color(0xFFFBBF24),
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        elevation: 0,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Branding header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1C1A14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Column(
+              children: [
+                Text(
+                  'MajaCraft',
+                  style: TextStyle(
+                    color: Color(0xFFFBBF24),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'Marketplace Kerajinan & Seni Indonesia',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'v1.0.0',
+                  style: TextStyle(color: Colors.white38, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Layanan
+          _buildSection(
+            context,
+            title: 'LAYANAN',
+            icon: Icons.miscellaneous_services_outlined,
+            items: _layanan,
+          ),
+          const SizedBox(height: 12),
+
+          // Informasi
+          _buildSection(
+            context,
+            title: 'INFORMASI',
+            icon: Icons.info_outline,
+            items: _informasi,
+          ),
+          const SizedBox(height: 24),
+
+          // Footer
+          Center(
+            child: Text(
+              '© 2026 MajaCraft. All rights reserved.',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required List<Map<String, String>> items,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: const Color(0xFF653611)),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF653611),
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: items.asMap().entries.map((entry) {
+              final i = entry.key;
+              final item = entry.value;
+              return Column(
+                children: [
+                  if (i > 0) const Divider(height: 1, indent: 16),
+                  ListTile(
+                    title: Text(
+                      item['title']!,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    trailing: const Icon(
+                      Icons.open_in_new,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
+                    onTap: () =>
+                        _openPage(context, item['title']!, item['url']!),
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
 }
