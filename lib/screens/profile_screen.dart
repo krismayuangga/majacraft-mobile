@@ -1169,12 +1169,16 @@ class _TentangScreen extends StatelessWidget {
                   ListTile(
                     title: Text(
                       item['title']!,
-                      style: const TextStyle(fontSize: 14),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF1A1A1A), // hitam tegas, mudah dibaca
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     trailing: const Icon(
                       Icons.open_in_new,
                       size: 16,
-                      color: Colors.grey,
+                      color: Color(0xFF653611), // ikon coklat brand
                     ),
                     onTap: () =>
                         _openPage(context, item['title']!, item['url']!),

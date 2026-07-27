@@ -17,6 +17,60 @@ class _InfoWebViewScreenState extends State<InfoWebViewScreen> {
   bool _isLoading = true;
   int _loadingProgress = 0;
 
+  // CSS yang diinjeksi untuk menyembunyikan navbar/footer/bottom-nav website
+  static const String _hideChromeCss = '''
+    (function() {
+      var style = document.createElement('style');
+      style.innerHTML = `
+        /* Sembunyikan navbar/header website */
+        nav,
+        header,
+        .navbar,
+        .nav-bar,
+        [class*="Navbar"],
+        [class*="navbar"],
+        [class*="Header"]:not(h1):not(h2):not(h3):not(h4),
+        [id*="navbar"],
+        [id*="header"],
+        
+        /* Sembunyikan footer website */
+        footer,
+        .footer,
+        [class*="Footer"],
+        [class*="footer"],
+        [id*="footer"],
+        
+        /* Sembunyikan bottom navigation */
+        .bottom-nav,
+        .bottom-menu,
+        [class*="BottomNav"],
+        [class*="bottom-nav"],
+        [class*="BottomMenu"],
+        [id*="bottom-nav"],
+        
+        /* Fixed/sticky elemen navigasi */
+        .sticky-top,
+        .fixed-top,
+        .fixed-bottom
+        { 
+          display: none !important; 
+          visibility: hidden !important;
+        }
+        
+        /* Hilangkan padding-top yang biasanya dibuat untuk navbar */
+        body { 
+          padding-top: 0 !important;
+          margin-top: 0 !important;
+        }
+      `;
+      document.head.appendChild(style);
+    })();
+  ''';
+
+  void _injectHideChrome() {
+    _controller.runJavaScript(_hideChromeCss);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -25,7 +79,11 @@ class _InfoWebViewScreenState extends State<InfoWebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (_) => setState(() => _isLoading = true),
-          onPageFinished: (_) => setState(() => _isLoading = false),
+          onPageFinished: (url) {
+            setState(() => _isLoading = false);
+            // Injeksi CSS untuk sembunyikan navbar/footer setelah halaman load
+            _injectHideChrome();
+          },
           onProgress: (p) => setState(() => _loadingProgress = p),
           onWebResourceError: (_) => setState(() => _isLoading = false),
         ),
