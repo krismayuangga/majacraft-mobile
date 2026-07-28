@@ -7,6 +7,7 @@ import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
 import '../screens/notification_list_screen.dart';
 import '../screens/chat_list_screen.dart';
+import '../screens/studio/studio_screen.dart';
 import 'main_screen.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
@@ -459,14 +460,14 @@ class _CustomAppBarState extends State<CustomAppBar> {
         mainScreenKey.currentState?.goToOrders();
         break;
       case 'studio':
-        mainScreenKey.currentState?.goToProfile();
-        // Buka Studio dari tab Akun
-        Future.delayed(const Duration(milliseconds: 300), () {
-          Navigator.pushNamed(context, '/studio');
-        });
+        // Langsung navigate ke Studio tanpa delay
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const StudioScreen()),
+        );
         break;
       case 'dashboard':
-        Navigator.pushNamed(context, '/admin');
+        // Ignore - admin only
         break;
       case 'logout':
         _showLogoutDialog(context);
