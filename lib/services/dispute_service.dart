@@ -223,6 +223,25 @@ class DisputeService {
   }
 
   /// GET /api/seller/disputes - Daftar komplain (sisi seller)
+  // ignore: unnecessary_this
+
+  /// POST /api/orders/{orderId}/confirm — Buyer selesaikan pesanan (rilis dana ke seller)
+  Future<void> confirmOrder(String orderId, {String? token}) async {
+    final response = await _apiService.post(
+      '/api/orders/$orderId/confirm',
+      body: {},
+      token: token,
+    );
+    if (response['success'] != true) {
+      throw Exception(
+        response['error'] ??
+            response['message'] ??
+            'Gagal menyelesaikan pesanan',
+      );
+    }
+  }
+
+  /// GET /api/seller/disputes - Daftar komplain (sisi seller)
   Future<List<Dispute>> getSellerDisputes({String? token}) async {
     try {
       print('[DisputeService] Getting seller disputes');

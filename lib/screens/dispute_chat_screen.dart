@@ -79,8 +79,8 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
   }
 
   void _startPolling() {
-    // Poll for updates every 10 seconds
-    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+    // Poll setiap 5 detik sesuai dokumentasi
+    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (mounted) {
         _loadDispute();
       }
@@ -652,8 +652,42 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
 
   Widget _buildActionButtons() {
     final dispute = _dispute!;
-    final isBuyer = _currentUserRole == 'BUYER';
-    final isSeller = _currentUserRole == 'SELLER';
+    final isBuyer = _currentUserRole == 'BUYER' || _currentUserRole?.toLowerCase() == 'buyer';
+    final isSeller = _currentUserRole == 'SELLER' || _currentUserRole?.toLowerCase() == 'seller';
+    final orderStatus = dispute.order?.status ?? '';
+
+    // Logika sesuai dokumentasi fitur-komplain.md
+    final closedStatuses = ['RESOLVED', 'CLOSED', 'CANCELLED'];
+    final isClosedDispute = closedStatuses.contains(dispute.status.name);
+
+    // 1. BUYER: Selesaikan Pesanan — rilis dana ke seller
+    final showComplete = isBuyer &&
+        ['SHIPPED', 'DELIVERED'].contains(orderStatus) &&
+        !isClosedDispute &&
+        dispute.returnTrackingNumber == null; // sembunyikan jika sudah kirim retur
+
+    // 2. BUYER: Form input resi retur — HANYA untuk RETURN_REFUND
+    final showReturnForm = isBuyer &&
+        dispute.requestedAction == DisputeAction.RETURN_REFUND &&
+        dispute.returnTrackingNumber == null &&
+        !['PENDING_SELLER', 'CLOSED', 'CANCELLED'].contains(dispute.status.name) &&
+        orderStatus != 'REFUNDED';
+
+    // 3. SELLER: Konfirmasi terima retur
+    final showConfirmReturn = isSeller &&
+        dispute.returnTrackingNumber != null &&
+        dispute.returnReceivedAt == null &&
+        orderStatus != 'REFUNDED';
+
+    // 4. Eskalasi ke Admin
+    final showEscalate = dispute.canEscalate &&
+        (isBuyer || isSeller);
+
+    // Jangan tampilkan apa-apa jika tidak ada tombol aktif dan tidak ada info resi
+    final hasAnyAction = showComplete || showReturnForm || showConfirmReturn || showEscalate;
+    final hasReturnInfo = dispute.returnTrackingNumber != null;
+
+    if (!hasAnyAction && !hasReturnInfo) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -664,58 +698,166 @@ class _DisputeChatScreenState extends State<DisputeChatScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // BUYER: Submit return tracking
-          if (isBuyer && dispute.status == DisputeStatus.REFUND_PENDING)
+          // INFO RESI RETUR (read-only) — setelah buyer submit resi
+          if (hasReturnInfo) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8E1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFFCA28)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    const Icon(Icons.local_shipping, size: 16, color: Color(0xFFF57F17)),
+                    const SizedBox(width: 6),
+                    const Text('Info Resi Retur', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFFF57F17))),
+                    if (dispute.returnReceivedAt != null) ...[
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(12)),
+                        child: const Text('Diterima', style: TextStyle(color: Colors.white, fontSize: 10)),
+                      ),
+                    ],
+                  ]),
+                  const SizedBox(height: 6),
+                  Text('Kurir: ${dispute.returnCourier ?? "-"}', style: const TextStyle(fontSize: 12)),
+                  Text('Nomor Resi: ${dispute.returnTrackingNumber}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  if (dispute.returnReceivedAt != null)
+                    Text('Diterima: ${timeago.format(dispute.returnReceivedAt!, locale: 'id')}', style: const TextStyle(fontSize: 11, color: Colors.green)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          // BUYER: Selesaikan Pesanan
+          if (showComplete) ...[
+            ElevatedButton.icon(
+              onPressed: _showCompleteOrderDialog,
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Selesaikan Pesanan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Selesaikan pesanan untuk melepas dana ke penjual',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 8),
+          ],
+
+          // BUYER: Input resi retur
+          if (showReturnForm) ...[
             ElevatedButton.icon(
               onPressed: _showSubmitReturnDialog,
               icon: const Icon(Icons.local_shipping),
-              label: const Text('Kirim Resi Retur'),
+              label: const Text('Input Resi Retur'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF653611),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
+            const SizedBox(height: 8),
+          ],
 
-          // SELLER: Confirm return received
-          if (isSeller && dispute.status == DisputeStatus.REFUND_PENDING)
+          // SELLER: Konfirmasi terima retur
+          if (showConfirmReturn) ...[
             ElevatedButton.icon(
               onPressed: _confirmReturnReceived,
               icon: const Icon(Icons.check_circle),
-              label: const Text('Konfirmasi Barang Diterima'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              label: const Text('Konfirmasi Barang Retur Diterima'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
             ),
-
-          // BUYER: Escalate or Cancel
-          if (isBuyer && dispute.canEscalate) ...[
             const SizedBox(height: 8),
+          ],
+
+          // Eskalasi + Batalkan
+          if (showEscalate) ...[
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _showEscalateDialog,
-                    icon: const Icon(Icons.warning),
-                    label: const Text('Eskalasi'),
+                    icon: const Icon(Icons.warning, size: 16),
+                    label: const Text('Eskalasi ke Admin'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.orange,
+                      side: const BorderSide(color: Colors.orange),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _showCancelDialog,
-                    icon: const Icon(Icons.cancel),
-                    label: const Text('Batalkan'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
+                if (isBuyer) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _showCancelDialog,
+                      icon: const Icon(Icons.cancel, size: 16),
+                      label: const Text('Batalkan'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ],
         ],
       ),
     );
+  }
+
+  Future<void> _showCompleteOrderDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Selesaikan Pesanan'),
+        content: const Text(
+          'Yakin selesaikan pesanan? Dana akan dilepas ke penjual dan komplain akan ditutup.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32), foregroundColor: Colors.white),
+            child: const Text('Selesaikan'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final token = Provider.of<AuthProvider>(context, listen: false).token;
+      await _disputeService.confirmOrder(_dispute!.order.id, token: token);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pesanan berhasil diselesaikan'), backgroundColor: Colors.green),
+        );
+        _loadDispute();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Widget _buildInputField() {

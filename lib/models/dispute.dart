@@ -307,12 +307,14 @@ class DisputeTimeline {
 }
 
 class DisputeOrder {
+  final String id;
   final String orderNumber;
   final int total;
   final String status;
   final List<dynamic> items;
 
   DisputeOrder({
+    required this.id,
     required this.orderNumber,
     required this.total,
     required this.status,
@@ -321,6 +323,7 @@ class DisputeOrder {
 
   factory DisputeOrder.fromJson(Map<String, dynamic> json) {
     return DisputeOrder(
+      id: json['id']?.toString() ?? '',
       orderNumber: json['orderNumber']?.toString() ?? '',
       total: _parseInt(json['total']),
       status: json['status']?.toString() ?? '',
