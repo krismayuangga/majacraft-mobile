@@ -33,6 +33,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   bool _isOpeningChat = false;
   bool _isAddingToCart = false;
   bool _isBuyingNow = false;
+  Product? _fullProduct; // Data lengkap dari detail API (semua gambar)
   final ChatService _chatService = ChatService(ApiService());
   final CartService _cartService = CartService(ApiService());
 
@@ -40,6 +41,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadFullProduct();
+  }
+
+  Future<void> _loadFullProduct() async {
+    try {
+      final api = ApiService();
+      final response = await api.get('/api/products/${widget.product.id}');
+      final data = response['data'] as Map<String, dynamic>? ?? response;
+      if (data['id'] != null && mounted) {
+        setState(() => _fullProduct = Product.fromJson(data));
+      }
+    } catch (_) {
+      // Gunakan data dari listing jika detail gagal
+    }
   }
 
   Future<void> _toggleWishlist() async {
@@ -181,9 +196,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final images = widget.product.images.isNotEmpty
-        ? widget.product.images
-        : [widget.product.image];
+    // Gunakan _fullProduct jika sudah di-load (punya semua gambar dari detail API)
+    final product = _fullProduct ?? widget.product;
+    final images = product.images.isNotEmpty
+        ? product.images
+        : (widget.product.image.isNotEmpty ? [widget.product.image] : ['']);
 
     return Consumer<WishlistProvider>(
       builder: (context, wishlistProvider, child) {
