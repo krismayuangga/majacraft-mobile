@@ -41,10 +41,10 @@ class _CustomAppBarState extends State<CustomAppBar> {
   @override
   void initState() {
     super.initState();
-    _loadUnreadCount();
-    _loadChatUnreadCount();
-    // Hanya polling jika shouldPoll = true (HomeScreen saja)
+    // Load + polling HANYA di HomeScreen — cegah N screen × N request
     if (widget.shouldPoll) {
+      _loadUnreadCount();
+      _loadChatUnreadCount();
       _startChatPolling();
       _startNotifPolling();
     }
