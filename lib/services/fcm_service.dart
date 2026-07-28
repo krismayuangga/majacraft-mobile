@@ -333,13 +333,10 @@ class FCMService {
   Future<void> unregisterTokenFromBackend(String authToken) async {
     try {
       if (_fcmToken == null) return;
-
       final apiService = ApiService();
-      await apiService.delete('/user/fcm-token', token: authToken);
-
-      print('[FCM] Token unregistered from backend');
-    } catch (e) {
-      print('[FCM] Failed to unregister token: $e');
+      await apiService.delete('/api/mobile/fcm-token', token: authToken);
+    } catch (_) {
+      // Silent — FCM unregister bukan blocker logout
     }
   }
 
