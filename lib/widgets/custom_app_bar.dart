@@ -51,7 +51,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   void _startChatPolling() {
     _chatPollingTimer?.cancel();
     _chatPollingTimer = Timer.periodic(
-      const Duration(seconds: 15),
+      const Duration(seconds: 60), // 60s — kurangi beban pada banyak screen
       (_) => _loadChatUnreadCount(),
     );
   }
@@ -59,7 +59,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   void _startNotifPolling() {
     _notifPollingTimer?.cancel();
     _notifPollingTimer = Timer.periodic(
-      const Duration(seconds: 30),
+      const Duration(seconds: 120), // 120s
       (_) => _loadUnreadCount(),
     );
   }
