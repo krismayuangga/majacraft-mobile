@@ -280,6 +280,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                   );
                                 },
                               ),
+                            ), // tutup Positioned.fill
                               // Badges
                               if (widget.product.hasNFT)
                                 Positioned(
