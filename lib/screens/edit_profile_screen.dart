@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,8 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../services/upload_service.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -122,43 +123,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final token = authProvider.token;
+      if (token == null) throw Exception('Token tidak ditemukan');
 
-      if (token == null) {
-        throw Exception('Token tidak ditemukan');
+      // 1. Upload gambar dulu ke /api/upload jika ada
+      String? imageUrl;
+      if (_imageFile != null) {
+        setState(() => _isLoadingImage = true);
+        imageUrl = await UploadService().uploadImage(
+          _imageFile!,
+          'avatars',
+          token,
+        );
+        setState(() => _isLoadingImage = false);
+      }
+
+      // 2. PATCH /api/users/me dengan JSON body
+      final body = <String, dynamic>{'name': _nameController.text.trim()};
+      if (_phoneController.text.trim().isNotEmpty) {
+        body['phone'] = _phoneController.text.trim();
+      }
+      if (imageUrl != null) {
+        body['image'] = imageUrl;
       }
 
       final uri = Uri.parse('https://majacraft.id/api/users/me');
-      final request = http.MultipartRequest('PATCH', uri);
-
-      request.headers['Authorization'] = 'Bearer $token';
-
-      // Add text fields
-      request.fields['name'] = _nameController.text.trim();
-      if (_phoneController.text.trim().isNotEmpty) {
-        request.fields['phone'] = _phoneController.text.trim();
-      }
-
-      // Add image if selected
-      if (_imageFile != null) {
-        final extension = _imageFile!.path.split('.').last.toLowerCase();
-        final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
-
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            _imageFile!.path,
-            contentType: MediaType.parse(mimeType),
-          ),
-        );
-      }
-
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await http.patch(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
 
       if (response.statusCode == 200) {
-        // Refresh user data
         await authProvider.initialize();
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -166,24 +165,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pop(context, true); // Return true to indicate success
+          Navigator.pop(context, true);
         }
       } else {
-        throw Exception('Gagal memperbarui profil: ${response.body}');
+        final err = jsonDecode(response.body);
+        throw Exception(
+          err['error'] ?? err['message'] ?? 'Gagal memperbarui profil',
+        );
       }
     } catch (e) {
+      setState(() => _isLoadingImage = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Terjadi kesalahan: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('$e'), backgroundColor: Colors.red),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

@@ -55,17 +55,35 @@ class _StudioScreenState extends State<StudioScreen>
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.add_circle_outline,
-              color: Color(0xFFFBBF24),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddProductScreen()),
+                );
+              },
+              icon: const Icon(Icons.add, size: 16, color: Color(0xFF1C1A14)),
+              label: const Text(
+                'Tambah Karya',
+                style: TextStyle(
+                  color: Color(0xFF1C1A14),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFFD4A020),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
             ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AddProductScreen()),
-              );
-            },
           ),
         ],
         bottom: PreferredSize(
