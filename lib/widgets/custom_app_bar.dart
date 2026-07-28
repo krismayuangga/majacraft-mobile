@@ -477,25 +477,25 @@ class _CustomAppBarState extends State<CustomAppBar> {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Color(0xFF1C1A15),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1A15),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Color(0xFF362215), width: 1),
+          side: const BorderSide(color: Color(0xFF362215), width: 1),
         ),
-        title: Text('Keluar', style: TextStyle(color: Colors.white)),
+        title: const Text('Keluar', style: TextStyle(color: Colors.white)),
         content: Text(
           'Apakah Anda yakin ingin keluar?',
           style: TextStyle(color: Colors.grey.shade300),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: Text('Batal', style: TextStyle(color: Colors.grey.shade400)),
           ),
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
+              gradient: const LinearGradient(
                 colors: [Color(0xFF7A4822), Color(0xFF653611)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -503,22 +503,24 @@ class _CustomAppBarState extends State<CustomAppBar> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // TODO: Implement logout logic
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Berhasil keluar'),
-                    backgroundColor: Color(0xFF653611),
-                    behavior: SnackBarBehavior.floating,
-                  ),
+              onPressed: () async {
+                Navigator.pop(ctx); // tutup dialog
+                final authProvider = Provider.of<AuthProvider>(
+                  context,
+                  listen: false,
                 );
+                await authProvider.logout();
+                // Tidak perlu navigasi — Provider notifyListeners()
+                // akan rebuild widget tree dan tampilkan kondisi not-authenticated
               },
               style: TextButton.styleFrom(
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
               ),
-              child: Text('Keluar'),
+              child: const Text('Keluar'),
             ),
           ),
         ],
