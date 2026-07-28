@@ -13,8 +13,14 @@ import 'main_screen.dart';
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool showSearch;
   final VoidCallback? onSearchTap;
+  final bool shouldPoll; // Hanya aktif di screen utama (HomeScreen)
 
-  const CustomAppBar({super.key, this.showSearch = true, this.onSearchTap});
+  const CustomAppBar({
+    super.key,
+    this.showSearch = true,
+    this.onSearchTap,
+    this.shouldPoll = false, // Default OFF — cegah multiple timer
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(60);
@@ -37,8 +43,11 @@ class _CustomAppBarState extends State<CustomAppBar> {
     super.initState();
     _loadUnreadCount();
     _loadChatUnreadCount();
-    _startChatPolling();
-    _startNotifPolling();
+    // Hanya polling jika shouldPoll = true (HomeScreen saja)
+    if (widget.shouldPoll) {
+      _startChatPolling();
+      _startNotifPolling();
+    }
   }
 
   @override

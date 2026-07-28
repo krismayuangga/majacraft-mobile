@@ -101,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
+        shouldPoll: true, // Hanya HomeScreen yang polling badge
         onSearchTap:
             widget.onSearchTap ??
             () {
