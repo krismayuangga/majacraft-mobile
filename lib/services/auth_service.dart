@@ -163,11 +163,17 @@ class AuthService {
     try {
       final response = await _apiService.get(ApiConfig.profile, token: token);
       final data = _extractData(response);
+      print('[AuthService] refreshUser data keys: ${data.keys.toList()}');
+      print(
+        '[AuthService] refreshUser phone=${data["phone"]} image=${data["image"]}',
+      );
       if (data['id'] != null) {
         return User.fromJson(data);
       }
+      print('[AuthService] refreshUser: no id in data');
       return null;
-    } catch (_) {
+    } catch (e) {
+      print('[AuthService] refreshUser error: $e');
       return null;
     }
   }

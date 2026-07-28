@@ -167,9 +167,19 @@ class AuthProvider with ChangeNotifier {
       if (response != null) {
         _user = response;
         await _authService.saveUser(_user!);
+        print(
+          '[AuthProvider] User refreshed: name=${_user?.name} phone=${_user?.phone} image=${_user?.image}',
+        );
         notifyListeners();
+      } else {
+        print(
+          '[AuthProvider] refreshUser returned null — fallback to initialize',
+        );
+        await initialize();
       }
-    } catch (_) {}
+    } catch (e) {
+      print('[AuthProvider] refreshUserData error: $e');
+    }
   }
 
   // Update KYC Status
