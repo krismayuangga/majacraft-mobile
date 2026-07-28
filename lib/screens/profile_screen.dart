@@ -364,7 +364,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Icon(
-                                                  user.role == 'seller'
+                                                  user.role.toLowerCase() ==
+                                                          'seller'
                                                       ? Icons.palette
                                                       : Icons.person,
                                                   size: 12,
@@ -372,7 +373,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  user.role == 'seller'
+                                                  user.role.toLowerCase() ==
+                                                          'seller'
                                                       ? 'Seniman'
                                                       : 'Pembeli',
                                                   style: const TextStyle(
@@ -491,7 +493,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             // ─── Tombol aksi di dalam header ─────────────
                             const SizedBox(height: 16),
                             // BUYER: "Jadi Seniman" + "Verifikasi Akun"
-                            if (user.role != 'seller' && user.role != 'SELLER')
+                            if (user.role.toLowerCase() != 'seller' &&
+                                user.role.toLowerCase() != 'admin')
                               Row(
                                 children: [
                                   // Tombol Jadi Seniman
@@ -589,7 +592,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ],
                               ),
                             // SELLER: "Buka Studio"
-                            if (user.role == 'seller' || user.role == 'SELLER')
+                            if (user.role.toLowerCase() == 'seller' ||
+                                user.role.toLowerCase() == 'admin')
                               GestureDetector(
                                 onTap: () => Navigator.push(
                                   context,
@@ -819,7 +823,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _buildSectionHeader('PENGATURAN TOKO'),
                       _buildMenuCard([
-                        if (user.role == 'seller')
+                        if (user.role.toLowerCase() == 'seller' ||
+                            user.role.toLowerCase() == 'admin')
                           _MenuItem(
                             icon: Icons.store_outlined,
                             title: 'Buka Studio Seniman',
@@ -832,11 +837,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               );
                             },
                           ),
-                        if (user.role != 'seller')
+                        if (user.role.toLowerCase() != 'seller' &&
+                            user.role.toLowerCase() != 'admin')
                           _MenuItem(
                             icon: Icons.palette_outlined,
-                            title: 'Buka Studio Seniman',
-                            onTap: () => _navigateToKYC(context),
+                            title: 'Jadi Seniman',
+                            onTap: () => showUpgradeToSellerDialog(
+                              context,
+                              onSuccess: () => setState(() {}),
+                            ),
                           ),
                         _MenuItem(
                           icon: user.kycStatus == 'VERIFIED'
