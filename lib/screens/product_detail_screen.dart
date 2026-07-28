@@ -27,13 +27,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     with SingleTickerProviderStateMixin {
   int _quantity = 1;
   int _currentImageIndex = 0;
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
+  Product? _fullProduct; // data lengkap dari detail API (semua gambar)
   late TabController _tabController;
   bool _isTogglingWishlist = false;
   bool _isOpeningChat = false;
   bool _isAddingToCart = false;
   bool _isBuyingNow = false;
-  Product? _fullProduct; // Data lengkap dari detail API (semua gambar)
   final ChatService _chatService = ChatService(ApiService());
   final CartService _cartService = CartService(ApiService());
 
@@ -44,17 +44,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     _loadFullProduct();
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  /// Load data produk lengkap (semua gambar) dari API detail
   Future<void> _loadFullProduct() async {
     try {
       final api = ApiService();
-      final response = await api.get('/api/products/${widget.product.id}');
-      final data = response['data'] as Map<String, dynamic>? ?? response;
+      final resp = await api.get('/api/products/${widget.product.id}');
+      final data = (resp['data'] ?? resp) as Map<String, dynamic>;
       if (data['id'] != null && mounted) {
         setState(() => _fullProduct = Product.fromJson(data));
       }
     } catch (_) {
-      // Gunakan data dari listing jika detail gagal
+      /* pakai data listing jika gagal */
     }
+  }
+
+  void _openFullscreen(List<String> images, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            _FullscreenGallery(images: images, initialIndex: initialIndex),
+      ),
+    );
   }
 
   Future<void> _toggleWishlist() async {
@@ -188,19 +206,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Gunakan _fullProduct jika sudah di-load (punya semua gambar dari detail API)
     final product = _fullProduct ?? widget.product;
     final images = product.images.isNotEmpty
         ? product.images
-        : (widget.product.image.isNotEmpty ? [widget.product.image] : ['']);
+        : [widget.product.image];
 
     return Consumer<WishlistProvider>(
       builder: (context, wishlistProvider, child) {
@@ -257,237 +267,184 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           ),
           body: ListView(
             children: [
-              // ─── Image Gallery: 1:1 square, swipeable, tap to fullscreen ───
-              LayoutBuilder(
-                builder: (ctx, constraints) {
-                  final size = constraints.maxWidth;
-                  return Column(
-                    children: [
-                      // Main swipeable image (1:1 square)
-                      SizedBox(
-                        width: size,
-                        height: size,
-                        child: Stack(
-                          children: [
-                            // PageView penuh dengan controller
-                            Positioned.fill(
-                              child: PageView.builder(
-                                controller: _pageController,
-                                itemCount: images.length,
-                                onPageChanged: (index) =>
-                                    setState(() => _currentImageIndex = index),
-                                itemBuilder: (context, index) {
-                                  return GestureDetector(
-                                    onTap: () => _openFullscreen(
-                                      ctx,
-                                      images,
-                                      _currentImageIndex,
-                                    ),
-                                    child: SizedBox.expand(
-                                      child: ColoredBox(
-                                        color: Colors.black,
-                                        child: Image.network(
-                                          images[index],
-                                          fit: BoxFit.contain,
-                                          width: size,
-                                          height: size,
-                                          errorBuilder: (_, __, ___) =>
-                                              const Center(
-                                            child: Icon(
-                                              Icons.image_not_supported,
-                                              size: 64,
-                                              color: Colors.white54,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                                        width: size,
-                                        height: size,
-                                        errorBuilder: (_, __, ___) =>
-                                            const Center(
-                                              child: Icon(
-                                                Icons.image_not_supported,
-                                                size: 64,
-                                                color: Colors.white54,
-                                              ),
-                                            ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ), // tutup Positioned.fill
-                            // Badges
-                            if (widget.product.hasNFT)
-                              Positioned(
-                                top: 12,
-                                left: 12,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.purple.shade700,
-                                        Colors.blue.shade700,
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.verified,
-                                        size: 12,
-                                        color: Colors.white,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'PHYGITAL',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            if (widget.product.originalPrice != null)
-                              Positioned(
-                                top: 12,
-                                right: 12,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.shade600,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    '-${(((widget.product.originalPrice! - widget.product.price) / widget.product.originalPrice!) * 100).round()}%',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            // Tap hint icon
-                            Positioned(
-                              bottom: 12,
-                              right: 12,
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Icon(
-                                  Icons.fullscreen,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                            ),
-                            // Indicator dots
-                            if (images.length > 1)
-                              Positioned(
-                                bottom: 12,
-                                left: 0,
-                                right: 0,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: List.generate(
-                                    images.length,
-                                    (i) => Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 3,
-                                      ),
-                                      width: _currentImageIndex == i ? 24 : 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: _currentImageIndex == i
-                                            ? const Color(0xFFD4A020)
-                                            : Colors.white.withOpacity(0.5),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      // Thumbnail strip
-                      if (images.length > 1)
-                        Container(
-                          height: 72,
-                          color: Colors.black,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 8,
-                          ),
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
+              // Image Gallery 1:1
+              Container(
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
+                        AspectRatio(
+                          aspectRatio: 1.0,
+                          child: PageView.builder(
+                            controller: _pageController,
                             itemCount: images.length,
-                            itemBuilder: (context, i) {
-                              final isActive = i == _currentImageIndex;
+                            onPageChanged: (index) {
+                              setState(() => _currentImageIndex = index);
+                            },
+                            itemBuilder: (context, index) {
                               return GestureDetector(
-                                onTap: () {
-                                  setState(() => _currentImageIndex = i);
-                                  _pageController.animateToPage(
-                                    i,
-                                    duration: const Duration(milliseconds: 300),
-                                    curve: Curves.easeInOut,
-                                  );
-                                },
-                                child: Container(
-                                  width: 56,
-                                  height: 56,
-                                  margin: const EdgeInsets.only(right: 8),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: isActive
-                                          ? const Color(0xFFD4A020)
-                                          : Colors.white30,
-                                      width: isActive ? 2 : 1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(3),
-                                    child: Image.network(
-                                      images[i],
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => const Icon(
-                                        Icons.image,
-                                        color: Colors.white54,
+                                onTap: () => _openFullscreen(images, index),
+                                child: Image.network(
+                                  images[index],
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Icon(
+                                        Icons.image_not_supported,
+                                        size: 64,
                                       ),
-                                    ),
-                                  ),
+                                    );
+                                  },
                                 ),
                               );
                             },
                           ),
                         ),
-                    ],
-                  );
-                },
+                        // Badges on image
+                        if (widget.product.hasNFT)
+                          Positioned(
+                            top: 12,
+                            left: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.purple.shade700,
+                                    Colors.blue.shade700,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.verified,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'PHYGITAL',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        // Discount badge
+                        if (widget.product.originalPrice != null)
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade600,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '-${(((widget.product.originalPrice! - widget.product.price) / widget.product.originalPrice!) * 100).round()}%',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        // Dot indicators
+                        if (images.length > 1)
+                          Positioned(
+                            bottom: 10,
+                            left: 0,
+                            right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                images.length,
+                                (i) => Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 3,
+                                  ),
+                                  width: _currentImageIndex == i ? 24 : 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: _currentImageIndex == i
+                                        ? const Color(0xFF653611)
+                                        : Colors.white.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    // Thumbnail strip
+                    if (images.length > 1)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          children: List.generate(
+                            images.length,
+                            (i) => GestureDetector(
+                              onTap: () {
+                                _pageController.animateToPage(
+                                  i,
+                                  duration: const Duration(milliseconds: 250),
+                                  curve: Curves.easeInOut,
+                                );
+                              },
+                              child: Container(
+                                width: 56,
+                                height: 56,
+                                margin: const EdgeInsets.only(right: 8),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: _currentImageIndex == i
+                                        ? Colors.amber.shade700
+                                        : Colors.grey.shade300,
+                                    width: _currentImageIndex == i ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(5),
+                                  child: Image.network(
+                                    images[i],
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(
+                                              Icons.image_not_supported,
+                                              size: 20,
+                                            ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-
               // Certificate Button (if hasNFT)
               if (widget.product.hasNFT && widget.product.certificateId != null)
                 Container(
@@ -1385,24 +1342,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     }
   }
 
-  /// Buka fullscreen viewer dengan swipe + pinch zoom
-  void _openFullscreen(
-    BuildContext context,
-    List<String> images,
-    int initialIndex,
-  ) {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.black,
-        pageBuilder: (_, __, ___) =>
-            _FullscreenImageViewer(images: images, initialIndex: initialIndex),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-      ),
-    );
-  }
-
   void _showCertificateModal() {
     showDialog(
       context: context,
@@ -1668,29 +1607,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 }
 
-// ─── Fullscreen Image Viewer ─────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Fullscreen lightbox gallery
+// ─────────────────────────────────────────────────────────────────────────────
+class _FullscreenGallery extends StatefulWidget {
+  const _FullscreenGallery({required this.images, required this.initialIndex});
 
-class _FullscreenImageViewer extends StatefulWidget {
   final List<String> images;
   final int initialIndex;
-  const _FullscreenImageViewer({
-    required this.images,
-    required this.initialIndex,
-  });
 
   @override
-  State<_FullscreenImageViewer> createState() => _FullscreenImageViewerState();
+  State<_FullscreenGallery> createState() => _FullscreenGalleryState();
 }
 
-class _FullscreenImageViewerState extends State<_FullscreenImageViewer> {
-  late int _index;
-  late PageController _ctrl;
+class _FullscreenGalleryState extends State<_FullscreenGallery> {
+  late final PageController _ctrl;
+  late int _current;
 
   @override
   void initState() {
     super.initState();
-    _index = widget.initialIndex;
-    _ctrl = PageController(initialPage: _index);
+    _current = widget.initialIndex;
+    _ctrl = PageController(initialPage: widget.initialIndex);
   }
 
   @override
@@ -1703,86 +1641,123 @@ class _FullscreenImageViewerState extends State<_FullscreenImageViewer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: Text(
-          '${_index + 1} / ${widget.images.length}',
-          style: const TextStyle(color: Colors.white),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-      body: PageView.builder(
-        controller: _ctrl,
-        itemCount: widget.images.length,
-        onPageChanged: (i) => setState(() => _index = i),
-        itemBuilder: (context, i) {
-          return InteractiveViewer(
-            minScale: 0.8,
-            maxScale: 4.0,
-            child: Center(
-              child: Image.network(
-                widget.images[i],
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.broken_image,
-                  color: Colors.white54,
-                  size: 64,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Full-screen swipeable images
+            PageView.builder(
+              controller: _ctrl,
+              itemCount: widget.images.length,
+              onPageChanged: (i) => setState(() => _current = i),
+              itemBuilder: (context, i) => InteractiveViewer(
+                minScale: 1.0,
+                maxScale: 4.0,
+                child: Center(
+                  child: Image.network(
+                    widget.images[i],
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.image_not_supported,
+                      color: Colors.white54,
+                      size: 64,
+                    ),
+                  ),
                 ),
               ),
             ),
-          );
-        },
-      ),
-      // Thumbnail strip di bawah
-      bottomNavigationBar: widget.images.length > 1
-          ? Container(
-              height: 70,
-              color: Colors.black87,
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-              child: ListView.builder(
+
+            // Counter "1/5"
+            Positioned(
+              top: 12,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_current + 1} / ${widget.images.length}',
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ),
+              ),
+            ),
+
+            // Close button
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(6),
+                  child: const Icon(Icons.close, color: Colors.white, size: 22),
+                ),
+              ),
+            ),
+
+            // Thumbnail strip at bottom
+            Positioned(
+              bottom: 12,
+              left: 0,
+              right: 0,
+              child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                itemCount: widget.images.length,
-                itemBuilder: (_, i) {
-                  final active = i == _index;
-                  return GestureDetector(
-                    onTap: () {
-                      _ctrl.jumpToPage(i);
-                      setState(() => _index = i);
-                    },
-                    child: Container(
-                      width: 54,
-                      height: 54,
-                      margin: const EdgeInsets.only(right: 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: active
-                              ? const Color(0xFFD4A020)
-                              : Colors.white24,
-                          width: active ? 2 : 1,
-                        ),
-                        borderRadius: BorderRadius.circular(4),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: List.generate(
+                    widget.images.length,
+                    (i) => GestureDetector(
+                      onTap: () => _ctrl.animateToPage(
+                        i,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(3),
-                        child: Image.network(
-                          widget.images[i],
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              const Icon(Icons.image, color: Colors.white30),
+                      child: Container(
+                        width: 52,
+                        height: 52,
+                        margin: const EdgeInsets.only(right: 6),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: _current == i
+                                ? Colors.amber.shade600
+                                : Colors.white30,
+                            width: _current == i ? 2 : 1,
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: Image.network(
+                            widget.images[i],
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(
+                                  Icons.image_not_supported,
+                                  color: Colors.white54,
+                                  size: 20,
+                                ),
+                          ),
                         ),
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
-            )
-          : null,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
