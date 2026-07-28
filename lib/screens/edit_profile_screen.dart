@@ -157,7 +157,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
       if (response.statusCode == 200) {
-        await authProvider.initialize();
+        // Refresh dari SERVER agar local cache update dengan data terbaru
+        await authProvider.refreshUserData();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

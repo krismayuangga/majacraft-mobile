@@ -262,7 +262,7 @@ class _KYCScreenState extends State<KYCScreen> with TickerProviderStateMixin {
         } else if (response.statusCode >= 200 && response.statusCode < 300) {
           // Success but empty body - might be intentional
           if (mounted) {
-            await authProvider.initialize();
+            await authProvider.refreshUserData();
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
