@@ -259,7 +259,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 itemBuilder: (context, index) {
                                   return GestureDetector(
                                     onTap: () => _openFullscreen(
-                                        ctx, images, _currentImageIndex),
+                                      ctx,
+                                      images,
+                                      _currentImageIndex,
+                                    ),
                                     child: Container(
                                       color: Colors.black,
                                       child: Image.network(
@@ -281,116 +284,113 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 },
                               ),
                             ), // tutup Positioned.fill
-                              // Badges
-                              if (widget.product.hasNFT)
-                                Positioned(
-                                  top: 12,
-                                  left: 12,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.purple.shade700,
-                                          Colors.blue.shade700,
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.verified,
-                                          size: 12,
-                                          color: Colors.white,
-                                        ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          'PHYGITAL',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
+                            // Badges
+                            if (widget.product.hasNFT)
+                              Positioned(
+                                top: 12,
+                                left: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.purple.shade700,
+                                        Colors.blue.shade700,
                                       ],
                                     ),
+                                    borderRadius: BorderRadius.circular(4),
                                   ),
-                                ),
-                              if (widget.product.originalPrice != null)
-                                Positioned(
-                                  top: 12,
-                                  right: 12,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red.shade600,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      '-${(((widget.product.originalPrice! - widget.product.price) / widget.product.originalPrice!) * 100).round()}%',
-                                      style: const TextStyle(
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.verified,
+                                        size: 12,
                                         color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
                                       ),
-                                    ),
-                                  ),
-                                ),
-                              // Tap hint icon
-                              Positioned(
-                                bottom: 12,
-                                right: 12,
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Icon(
-                                    Icons.fullscreen,
-                                    color: Colors.white,
-                                    size: 18,
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'PHYGITAL',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                              // Indicator dots
-                              if (images.length > 1)
-                                Positioned(
-                                  bottom: 12,
-                                  left: 0,
-                                  right: 0,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: List.generate(
-                                      images.length,
-                                      (i) => Container(
-                                        margin: const EdgeInsets.symmetric(
-                                          horizontal: 3,
-                                        ),
-                                        width: _currentImageIndex == i ? 24 : 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: _currentImageIndex == i
-                                              ? const Color(0xFFD4A020)
-                                              : Colors.white.withOpacity(0.5),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                        ),
+                            if (widget.product.originalPrice != null)
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade600,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    '-${(((widget.product.originalPrice! - widget.product.price) / widget.product.originalPrice!) * 100).round()}%',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            // Tap hint icon
+                            Positioned(
+                              bottom: 12,
+                              right: 12,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Icon(
+                                  Icons.fullscreen,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                            // Indicator dots
+                            if (images.length > 1)
+                              Positioned(
+                                bottom: 12,
+                                left: 0,
+                                right: 0,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    images.length,
+                                    (i) => Container(
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 3,
+                                      ),
+                                      width: _currentImageIndex == i ? 24 : 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: _currentImageIndex == i
+                                            ? const Color(0xFFD4A020)
+                                            : Colors.white.withOpacity(0.5),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
                                     ),
                                   ),
                                 ),
-                            ],
-                          ),
+                              ),
+                          ],
                         ),
                       ),
                       // Thumbnail strip
