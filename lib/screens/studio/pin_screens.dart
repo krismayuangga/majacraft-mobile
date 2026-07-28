@@ -235,7 +235,7 @@ class _SetPinScreenState extends State<SetPinScreen> {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'type': 'withdrawal'}),
+        body: jsonEncode({'type': 'pin_reset'}),
       );
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
       if (resp.statusCode == 200 && data['success'] == true) {
@@ -266,11 +266,7 @@ class _SetPinScreenState extends State<SetPinScreen> {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'otp': _otp,
-          'pin': _pin,
-          'otpType': 'withdrawal', // sama seperti pola bank_change
-        }),
+        body: jsonEncode({'otp': _otp, 'pin': _pin}),
       );
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
       if (!mounted) return;
