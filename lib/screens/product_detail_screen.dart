@@ -27,6 +27,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     with SingleTickerProviderStateMixin {
   int _quantity = 1;
   int _currentImageIndex = 0;
+  PageController _pageController = PageController();
   late TabController _tabController;
   bool _isTogglingWishlist = false;
   bool _isOpeningChat = false;
@@ -173,6 +174,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
   @override
   void dispose() {
+    _pageController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -250,9 +252,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                         height: size,
                         child: Stack(
                           children: [
-                            // PageView harus Positioned.fill agar penuh
+                            // PageView penuh dengan controller
                             Positioned.fill(
                               child: PageView.builder(
+                                controller: _pageController,
                                 itemCount: images.length,
                                 onPageChanged: (index) =>
                                     setState(() => _currentImageIndex = index),
@@ -263,11 +266,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                       images,
                                       _currentImageIndex,
                                     ),
-                                    child: Container(
-                                      color: Colors.black,
-                                      child: Image.network(
-                                        images[index],
-                                        fit: BoxFit.contain,
+                                    child: SizedBox.expand(
+                                      child: ColoredBox(
+                                        color: Colors.black,
+                                        child: Image.network(
+                                          images[index],
+                                          fit: BoxFit.contain,
+                                          width: size,
+                                          height: size,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Center(
+                                            child: Icon(
+                                              Icons.image_not_supported,
+                                              size: 64,
+                                              color: Colors.white54,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                                         width: size,
                                         height: size,
                                         errorBuilder: (_, __, ___) =>
@@ -409,8 +430,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               final isActive = i == _currentImageIndex;
                               return GestureDetector(
                                 onTap: () {
-                                  // TODO: animate PageView to this index
                                   setState(() => _currentImageIndex = i);
+                                  _pageController.animateToPage(
+                                    i,
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeInOut,
+                                  );
                                 },
                                 child: Container(
                                   width: 56,
