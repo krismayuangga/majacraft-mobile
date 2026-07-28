@@ -5,6 +5,7 @@ import '../../../models/balance.dart';
 import '../../../models/store.dart';
 import '../../../services/api_service.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../widgets/pin_dialogs.dart';
 
 class StudioSaldoTab extends StatefulWidget {
   const StudioSaldoTab({Key? key}) : super(key: key);
@@ -24,6 +25,7 @@ class _StudioSaldoTabState extends State<StudioSaldoTab> {
   Balance? _balance;
   Store? _store;
   bool _isLoading = true;
+  bool _hasPin = false; // Track apakah PIN sudah diset
 
   @override
   void initState() {
@@ -46,7 +48,10 @@ class _StudioSaldoTabState extends State<StudioSaldoTab> {
       );
 
       if (balanceResponse['success'] == true) {
-        _balance = Balance.fromJson(balanceResponse['data']);
+        final data = balanceResponse['data'] as Map<String, dynamic>;
+        _balance = Balance.fromJson(data);
+        // Backend bisa sertakan hasPin di response balance
+        _hasPin = data['hasPin'] == true;
       }
 
       final storeResponse = await _apiService.get(
@@ -391,43 +396,88 @@ class _StudioSaldoTabState extends State<StudioSaldoTab> {
   }
 
   Widget _buildActionButtons(Balance? balance, Store? store) {
-    return Row(
+    final canWithdraw = _canWithdraw(balance, store);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 2,
-          child: ElevatedButton.icon(
-            onPressed: _canWithdraw(balance, store) ? () {} : null,
-            icon: const Icon(Icons.account_balance_wallet, size: 18),
-            label: const Text('Cairkan Dana'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB45309),
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey[300],
-              disabledForegroundColor: Colors.grey[500],
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: ElevatedButton.icon(
+                onPressed: canWithdraw
+                    ? () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => WithdrawDialog(
+                            availableBalance: balance!.availableBalance,
+                            bankName: store?.bankName,
+                            bankAccount: store?.bankAccount,
+                            bankHolder: store?.bankHolder,
+                            onSuccess: _loadData,
+                          ),
+                        );
+                      }
+                    : null,
+                icon: const Icon(Icons.account_balance_wallet, size: 18),
+                label: const Text('Cairkan Dana'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFB45309),
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.grey[300],
+                  disabledForegroundColor: Colors.grey[500],
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.lock_outline, size: 16),
-            label: const Text('PIN', style: TextStyle(fontSize: 13)),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              side: const BorderSide(color: Color(0xFFB45309), width: 1.5),
-              foregroundColor: const Color(0xFFB45309),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => SetPinDialog(
+                      onSuccess: () => setState(() => _hasPin = true),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.lock_outline, size: 16),
+                label: const Text('PIN', style: TextStyle(fontSize: 13)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(
+                    color: _hasPin ? Colors.green : const Color(0xFFB45309),
+                    width: 1.5,
+                  ),
+                  foregroundColor: _hasPin
+                      ? Colors.green
+                      : const Color(0xFFB45309),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
+        // Info jika PIN belum diset
+        if (!_hasPin) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: const [
+              Icon(Icons.info_outline, size: 13, color: Color(0xFFB45309)),
+              SizedBox(width: 4),
+              Text(
+                'Set PIN dulu untuk bisa mencairkan dana',
+                style: TextStyle(fontSize: 11, color: Color(0xFFB45309)),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -577,6 +627,7 @@ class _StudioSaldoTabState extends State<StudioSaldoTab> {
     if (balance == null || store == null) return false;
     if (balance.availableBalance < 50000) return false;
     if (store.bankName == null || store.bankAccount == null) return false;
+    if (!_hasPin) return false; // Wajib set PIN dulu
     return true;
   }
 }
