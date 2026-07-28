@@ -113,6 +113,8 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     if (authProvider.isAuthenticated) {
+      // Refresh data user dari server (background) — pastikan phone/image terkini
+      authProvider.refreshUserData(); // fire-and-forget, tidak block navigasi
       try {
         await context.read<WishlistProvider>().loadWishlists(
           authProvider.token!,
