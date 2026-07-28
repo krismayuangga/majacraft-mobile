@@ -4,9 +4,11 @@ import '../../../models/store.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../add_product_screen.dart';
 
 class StudioRingkasanTab extends StatefulWidget {
-  const StudioRingkasanTab({Key? key}) : super(key: key);
+  final VoidCallback? onGoToPesanan;
+  const StudioRingkasanTab({Key? key, this.onGoToPesanan}) : super(key: key);
 
   @override
   State<StudioRingkasanTab> createState() => _StudioRingkasanTabState();
@@ -418,9 +420,11 @@ class _StudioRingkasanTabState extends State<StudioRingkasanTab> {
                     icon: Icons.add_circle,
                     label: 'Tambah Karya',
                     onTap: () {
-                      // TODO: Navigate to add product
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Coming soon')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AddProductScreen(),
+                        ),
                       );
                     },
                   ),
@@ -431,13 +435,7 @@ class _StudioRingkasanTabState extends State<StudioRingkasanTab> {
                     icon: Icons.shopping_bag,
                     label: 'Lihat Pesanan',
                     onTap: () {
-                      // User can use tab at the top to switch
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Klik tab Pesanan di atas'),
-                          duration: Duration(seconds: 1),
-                        ),
-                      );
+                      widget.onGoToPesanan?.call();
                     },
                   ),
                 ),
@@ -539,20 +537,27 @@ class _StudioRingkasanTabState extends State<StudioRingkasanTab> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF3C7),
-          border: Border.all(color: const Color(0xFFB45309).withOpacity(0.3)),
+          color: const Color(0xFF2C1A10),
+          border: Border.all(color: const Color(0xFFB45309).withOpacity(0.5)),
           borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            Icon(icon, color: const Color(0xFFB45309), size: 32),
+            Icon(icon, color: const Color(0xFFD4A020), size: 32),
             const SizedBox(height: 8),
             Text(
               label,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1C1A14),
+                color: Colors.white,
               ),
               textAlign: TextAlign.center,
             ),

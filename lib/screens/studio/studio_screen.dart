@@ -4,6 +4,7 @@ import 'tabs/studio_karya_tab.dart';
 import 'tabs/studio_pesanan_tab.dart';
 import 'tabs/studio_saldo_tab.dart';
 import 'tabs/studio_pengaturan_tab.dart';
+import 'add_product_screen.dart';
 
 class StudioScreen extends StatefulWidget {
   final int initialTab;
@@ -60,9 +61,9 @@ class _StudioScreenState extends State<StudioScreen>
               color: Color(0xFFFBBF24),
             ),
             onPressed: () {
-              // TODO: Navigate to Add Product screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tambah Karya - Coming soon')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddProductScreen()),
               );
             },
           ),
@@ -120,12 +121,12 @@ class _StudioScreenState extends State<StudioScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          StudioRingkasanTab(),
-          StudioKaryaTab(),
-          StudioPesananTab(),
-          StudioSaldoTab(),
-          StudioPengaturanTab(),
+        children: [
+          StudioRingkasanTab(onGoToPesanan: () => _tabController.animateTo(2)),
+          const StudioKaryaTab(),
+          const StudioPesananTab(),
+          const StudioSaldoTab(),
+          const StudioPengaturanTab(),
         ],
       ),
     );
