@@ -238,115 +238,205 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           ),
           body: ListView(
             children: [
-              // Image Gallery
-              Stack(
-                children: [
-                  Container(
-                    height: 350,
-                    color: Colors.white,
-                    child: PageView.builder(
-                      itemCount: images.length,
-                      onPageChanged: (index) {
-                        setState(() => _currentImageIndex = index);
-                      },
-                      itemBuilder: (context, index) {
-                        return Image.network(
-                          images[index],
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Icon(Icons.image_not_supported, size: 64),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  // Badges on image
-                  if (widget.product.hasNFT)
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.purple.shade700,
-                              Colors.blue.shade700,
+              // ─── Image Gallery: 1:1 square, swipeable, tap to fullscreen ───
+              Builder(
+                builder: (ctx) {
+                  final screenW = MediaQuery.of(ctx).size.width;
+                  return Column(
+                    children: [
+                      // Main swipeable image (1:1 square)
+                      GestureDetector(
+                        onTap: () =>
+                            _openFullscreen(ctx, images, _currentImageIndex),
+                        child: Container(
+                          width: screenW,
+                          height: screenW, // 1:1 square
+                          color: Colors.black,
+                          child: Stack(
+                            children: [
+                              PageView.builder(
+                                itemCount: images.length,
+                                onPageChanged: (index) =>
+                                    setState(() => _currentImageIndex = index),
+                                itemBuilder: (context, index) {
+                                  return Image.network(
+                                    images[index],
+                                    fit: BoxFit.contain,
+                                    width: screenW,
+                                    height: screenW,
+                                    errorBuilder: (_, __, ___) => const Center(
+                                      child: Icon(
+                                        Icons.image_not_supported,
+                                        size: 64,
+                                        color: Colors.white54,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              // Badges
+                              if (widget.product.hasNFT)
+                                Positioned(
+                                  top: 12,
+                                  left: 12,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.purple.shade700,
+                                          Colors.blue.shade700,
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.verified,
+                                          size: 12,
+                                          color: Colors.white,
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'PHYGITAL',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              if (widget.product.originalPrice != null)
+                                Positioned(
+                                  top: 12,
+                                  right: 12,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.shade600,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '-${(((widget.product.originalPrice! - widget.product.price) / widget.product.originalPrice!) * 100).round()}%',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              // Tap hint icon
+                              Positioned(
+                                bottom: 12,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Icon(
+                                    Icons.fullscreen,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                              // Indicator dots
+                              if (images.length > 1)
+                                Positioned(
+                                  bottom: 12,
+                                  left: 0,
+                                  right: 0,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      images.length,
+                                      (i) => Container(
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 3,
+                                        ),
+                                        width: _currentImageIndex == i ? 24 : 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: _currentImageIndex == i
+                                              ? const Color(0xFFD4A020)
+                                              : Colors.white.withOpacity(0.5),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.verified, size: 12, color: Colors.white),
-                            SizedBox(width: 4),
-                            Text(
-                              'PHYGITAL',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                    ),
-                  // Discount badge
-                  if (widget.product.originalPrice != null)
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade600,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '-${(((widget.product.originalPrice! - widget.product.price) / widget.product.originalPrice!) * 100).round()}%',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                      // Thumbnail strip
+                      if (images.length > 1)
+                        Container(
+                          height: 72,
+                          color: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: images.length,
+                            itemBuilder: (context, i) {
+                              final isActive = i == _currentImageIndex;
+                              return GestureDetector(
+                                onTap: () {
+                                  // TODO: animate PageView to this index
+                                  setState(() => _currentImageIndex = i);
+                                },
+                                child: Container(
+                                  width: 56,
+                                  height: 56,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: isActive
+                                          ? const Color(0xFFD4A020)
+                                          : Colors.white30,
+                                      width: isActive ? 2 : 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(3),
+                                    child: Image.network(
+                                      images[i],
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.image,
+                                        color: Colors.white54,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                      ),
-                    ),
-                  // Image indicator dots
-                  if (images.length > 1)
-                    Positioned(
-                      bottom: 12,
-                      left: 0,
-                      right: 0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          images.length,
-                          (index) => Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                            width: _currentImageIndex == index ? 24 : 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: _currentImageIndex == index
-                                  ? const Color(0xFF653611)
-                                  : Colors.white.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+                    ],
+                  );
+                },
               ),
 
               // Certificate Button (if hasNFT)
@@ -1246,6 +1336,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     }
   }
 
+  /// Buka fullscreen viewer dengan swipe + pinch zoom
+  void _openFullscreen(
+    BuildContext context,
+    List<String> images,
+    int initialIndex,
+  ) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black,
+        pageBuilder: (_, __, ___) =>
+            _FullscreenImageViewer(images: images, initialIndex: initialIndex),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+      ),
+    );
+  }
+
   void _showCertificateModal() {
     showDialog(
       context: context,
@@ -1507,6 +1615,125 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── Fullscreen Image Viewer ─────────────────────────────────────────────────
+
+class _FullscreenImageViewer extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+  const _FullscreenImageViewer({
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_FullscreenImageViewer> createState() => _FullscreenImageViewerState();
+}
+
+class _FullscreenImageViewerState extends State<_FullscreenImageViewer> {
+  late int _index;
+  late PageController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex;
+    _ctrl = PageController(initialPage: _index);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(
+          '${_index + 1} / ${widget.images.length}',
+          style: const TextStyle(color: Colors.white),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+      body: PageView.builder(
+        controller: _ctrl,
+        itemCount: widget.images.length,
+        onPageChanged: (i) => setState(() => _index = i),
+        itemBuilder: (context, i) {
+          return InteractiveViewer(
+            minScale: 0.8,
+            maxScale: 4.0,
+            child: Center(
+              child: Image.network(
+                widget.images[i],
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.broken_image,
+                  color: Colors.white54,
+                  size: 64,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      // Thumbnail strip di bawah
+      bottomNavigationBar: widget.images.length > 1
+          ? Container(
+              height: 70,
+              color: Colors.black87,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: widget.images.length,
+                itemBuilder: (_, i) {
+                  final active = i == _index;
+                  return GestureDetector(
+                    onTap: () {
+                      _ctrl.jumpToPage(i);
+                      setState(() => _index = i);
+                    },
+                    child: Container(
+                      width: 54,
+                      height: 54,
+                      margin: const EdgeInsets.only(right: 6),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: active
+                              ? const Color(0xFFD4A020)
+                              : Colors.white24,
+                          width: active ? 2 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: Image.network(
+                          widget.images[i],
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.image, color: Colors.white30),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            )
+          : null,
     );
   }
 }
