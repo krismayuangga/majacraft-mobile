@@ -239,36 +239,42 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           body: ListView(
             children: [
               // ─── Image Gallery: 1:1 square, swipeable, tap to fullscreen ───
-              Builder(
-                builder: (ctx) {
-                  final screenW = MediaQuery.of(ctx).size.width;
+              LayoutBuilder(
+                builder: (ctx, constraints) {
+                  final size = constraints.maxWidth;
                   return Column(
                     children: [
                       // Main swipeable image (1:1 square)
-                      GestureDetector(
-                        onTap: () =>
-                            _openFullscreen(ctx, images, _currentImageIndex),
-                        child: Container(
-                          width: screenW,
-                          height: screenW, // 1:1 square
-                          color: Colors.black,
-                          child: Stack(
-                            children: [
-                              PageView.builder(
+                      SizedBox(
+                        width: size,
+                        height: size,
+                        child: Stack(
+                          children: [
+                            // PageView harus Positioned.fill agar penuh
+                            Positioned.fill(
+                              child: PageView.builder(
                                 itemCount: images.length,
                                 onPageChanged: (index) =>
                                     setState(() => _currentImageIndex = index),
                                 itemBuilder: (context, index) {
-                                  return Image.network(
-                                    images[index],
-                                    fit: BoxFit.contain,
-                                    width: screenW,
-                                    height: screenW,
-                                    errorBuilder: (_, __, ___) => const Center(
-                                      child: Icon(
-                                        Icons.image_not_supported,
-                                        size: 64,
-                                        color: Colors.white54,
+                                  return GestureDetector(
+                                    onTap: () => _openFullscreen(
+                                        ctx, images, _currentImageIndex),
+                                    child: Container(
+                                      color: Colors.black,
+                                      child: Image.network(
+                                        images[index],
+                                        fit: BoxFit.contain,
+                                        width: size,
+                                        height: size,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Center(
+                                              child: Icon(
+                                                Icons.image_not_supported,
+                                                size: 64,
+                                                color: Colors.white54,
+                                              ),
+                                            ),
                                       ),
                                     ),
                                   );
