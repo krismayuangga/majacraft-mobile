@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:gal/gal.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/product.dart';
 
 class VerificationDetailScreen extends StatelessWidget {
@@ -163,6 +164,31 @@ class VerificationDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
+            const SizedBox(height: 12),
+            // Lihat di Website → Download PDF
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  final url =
+                      'https://majacraft.id/verifikasi/${product.certificateId}';
+                  launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
+                },
+                icon: const Icon(Icons.open_in_browser, size: 18),
+                label: const Text('Lihat di Website (Download PDF)'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF653611),
+                  side: const BorderSide(color: Color(0xFF653611)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             const SizedBox(height: 24),
 
