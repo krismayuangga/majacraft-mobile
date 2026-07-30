@@ -83,6 +83,9 @@ dependencies:
   # Deep linking — App Links (Android) / Universal Links (iOS)
   app_links: ^6.4.0
 
+  # Save image/file to device gallery
+  gal: ^2.3.0
+
   # Image caching — avoids re-downloading banners & categories every time
   cached_network_image: ^3.3.1
 

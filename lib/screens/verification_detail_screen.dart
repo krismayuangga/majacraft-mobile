@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
+import 'package:gal/gal.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/product.dart';
 
@@ -427,51 +426,92 @@ class VerificationDetailScreen extends StatelessWidget {
 
   Future<void> _downloadCertificate(BuildContext context) async {
     try {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Row(
             children: [
-              CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              ),
               SizedBox(width: 16),
               Text('Mengunduh sertifikat...'),
             ],
           ),
           backgroundColor: Color(0xFF653611),
           behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
+          duration: Duration(seconds: 3),
         ),
       );
 
-      // Download implementation
+      // Request permission for gallery access
+      final hasAccess = await Gal.hasAccess(toAlbum: true);
+      if (!hasAccess) {
+        await Gal.requestAccess(toAlbum: true);
+      }
+
+      // Download certificate image bytes
       final response = await http.get(Uri.parse(product.certificateImageUrl!));
 
       if (response.statusCode == 200) {
-        final directory = await getApplicationDocumentsDirectory();
-        final filePath =
-            '${directory.path}/certificate_${product.certificateId}.png';
-        final file = File(filePath);
-        await file.writeAsBytes(response.bodyBytes);
+        // Save directly to device gallery
+        await Gal.putImageBytes(
+          response.bodyBytes,
+          name: 'sertifikat_${product.certificateId ?? product.id}',
+          album: 'MajaCraft',
+        );
 
         if (context.mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Row(
                 children: [
                   Icon(Icons.check_circle, color: Color(0xFFD4AF69)),
                   SizedBox(width: 12),
-                  Expanded(child: Text('Sertifikat berhasil diunduh!')),
+                  Expanded(
+                    child: Text(
+                      'Sertifikat tersimpan di Galeri → Album MajaCraft',
+                    ),
+                  ),
                 ],
               ),
               backgroundColor: Color(0xFF653611),
               behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 4),
             ),
           );
         }
+      } else {
+        throw Exception('Download gagal: ${response.statusCode}');
+      }
+    } on GalException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.red),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Izin galeri ditolak: ${e.type.name}')),
+              ],
+            ),
+            backgroundColor: const Color(0xFF653611),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Row(
               children: [
                 Icon(Icons.error, color: Colors.red),
