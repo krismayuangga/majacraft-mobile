@@ -45,7 +45,7 @@ class _HeroBannerState extends State<HeroBanner> {
     BannerData(
       title: 'Lukisan Maestro Nusantara',
       subtitle:
-          'Karya lukis epic bergaya Wayang dan Ramayana dari seniman maestro Indonesia',
+          'Koleksi lukisan tangan eksklusif langsung dari seniman maestro Indonesia',
       primaryCta: 'Lihat Koleksi Lukisan',
       secondaryCta: 'Jual Karya',
       accent: 'Seni Visual Nusantara',
