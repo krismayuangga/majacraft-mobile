@@ -88,7 +88,7 @@ class _HeroBannerState extends State<HeroBanner> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 300,
+      height: 320,
       decoration: const BoxDecoration(color: Color(0xFF1C1A14)),
       child: Stack(
         children: [
