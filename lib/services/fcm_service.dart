@@ -82,7 +82,7 @@ class FCMService {
   /// Initialize local notifications for foreground messages
   Future<void> _initializeLocalNotifications() async {
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@drawable/ic_notification');
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
@@ -147,7 +147,6 @@ class FCMService {
           importance: Importance.high,
           priority: Priority.high,
           showWhen: true,
-          icon: '@drawable/ic_notification',
         );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
