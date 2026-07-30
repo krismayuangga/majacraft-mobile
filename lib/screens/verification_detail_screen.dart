@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/product.dart';
 
 class VerificationDetailScreen extends StatelessWidget {
@@ -32,11 +33,15 @@ class VerificationDetailScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.share, color: Colors.white),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Fitur share segera hadir'),
-                  backgroundColor: Color(0xFF653611),
-                  behavior: SnackBarBehavior.floating,
+              final url = product.certificateId != null
+                  ? 'https://majacraft.id/certificate/${product.certificateId}'
+                  : 'https://majacraft.id/products/${product.id}';
+              SharePlus.instance.share(
+                ShareParams(
+                  text:
+                      'Sertifikat Phygital: ${product.name}\n'
+                      'Verifikasi keaslian karya ini di:\n$url',
+                  subject: 'Sertifikat Phygital - ${product.name}',
                 ),
               );
             },

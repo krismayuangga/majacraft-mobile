@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../models/chat.dart';
@@ -255,10 +255,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               IconButton(
                 icon: const Icon(Icons.share, color: Colors.black87),
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Fitur share segera hadir'),
-                      duration: Duration(seconds: 1),
+                  final product = _fullProduct ?? widget.product;
+                  final url = 'https://majacraft.id/products/${product.id}';
+                  SharePlus.instance.share(
+                    ShareParams(
+                      text:
+                          '${product.name}\n'
+                          'Rp${product.price.toStringAsFixed(0)}\n\n'
+                          'Lihat di MajaCraft: $url',
+                      subject: product.name,
                     ),
                   );
                 },

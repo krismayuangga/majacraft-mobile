@@ -77,6 +77,9 @@ dependencies:
   # WebView for payment gateway
   webview_flutter: ^4.8.0
 
+  # Share to other apps (WhatsApp, sosmed, copy link)
+  share_plus: ^10.1.4
+
   # Image caching — avoids re-downloading banners & categories every time
   cached_network_image: ^3.3.1
 
