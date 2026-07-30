@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <!-- Letter M — monochrome white for notification tray -->
+  <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M2,20 L2,4 L6,4 L12,14 L18,4 L22,4 L22,20 L18,20 L18,10.5 L12,20 L6,10.5 L6,20 Z"/>
+</vector>
