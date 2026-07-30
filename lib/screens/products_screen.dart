@@ -575,139 +575,149 @@ class ProductsScreenState extends State<ProductsScreen> {
       appBar: CustomAppBar(showSearch: false), // Hide default search
       body: Column(
         children: [
-          // Search Bar
+          // Compact search + filter + sort dalam satu baris
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-            ),
-            child: TextField(
-              controller: _searchController,
-              focusNode: _searchFocusNode,
-              decoration: InputDecoration(
-                hintText: 'Cari kerajinan, batik, ukiran...',
-                hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
-                prefixIcon: Icon(Icons.search, color: Color(0xFFD4AF37)),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear, color: Colors.grey[600]),
-                        onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                            _searchQuery = '';
-                          });
-                          _loadProducts(refresh: true);
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.grey[50],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Color(0xFFD4AF37), width: 1.5),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              textInputAction: TextInputAction.search,
-              onSubmitted: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-                _loadProducts(refresh: true);
-              },
-              onChanged: (value) {
-                // Optional: debounce search for real-time filtering
-                // For now, wait for submit
-              },
-            ),
-          ),
-
-          // Toolbar (Filter, Sort)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-            ),
+            color: Colors.white,
             child: Row(
               children: [
-                // Filter Button
+                // Search field
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _showFilterBottomSheet,
-                    icon: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        const Icon(Icons.tune, size: 18),
-                        if (_getActiveFilterCount() > 0)
-                          Positioned(
-                            right: -8,
-                            top: -8,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF653611),
-                                shape: BoxShape.circle,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
-                              child: Text(
-                                _getActiveFilterCount().toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                  child: SizedBox(
+                    height: 40,
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Cari kerajinan, batik, ukiran...',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[500],
+                          fontSize: 13,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFFD4AF37),
+                          size: 20,
+                        ),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: Colors.grey[600],
+                                  size: 18,
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
+                                onPressed: () {
+                                  setState(() {
+                                    _searchController.clear();
+                                    _searchQuery = '';
+                                  });
+                                  _loadProducts(refresh: true);
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFD4AF37),
+                            width: 1.5,
                           ),
-                      ],
-                    ),
-                    label: const Text('Filter', style: TextStyle(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF653611),
-                      side: const BorderSide(color: Color(0xFF653611)),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                      ),
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: (value) {
+                        setState(() => _searchQuery = value);
+                        _loadProducts(refresh: true);
+                      },
                     ),
                   ),
                 ),
 
                 const SizedBox(width: 8),
 
-                // Sort Dropdown
-                Expanded(
+                // Filter icon button
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    InkWell(
+                      onTap: _showFilterBottomSheet,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFF653611)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.tune,
+                          color: Color(0xFF653611),
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    if (_getActiveFilterCount() > 0)
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF653611),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            _getActiveFilterCount().toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+
+                const SizedBox(width: 8),
+
+                // Sort dropdown compact
+                SizedBox(
+                  height: 40,
                   child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
                       border: Border.all(color: const Color(0xFF653611)),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _sortBy,
-                        isExpanded: true,
+                        isDense: true,
                         icon: const Icon(
-                          Icons.arrow_drop_down,
+                          Icons.expand_more,
                           color: Color(0xFF653611),
+                          size: 18,
                         ),
                         style: const TextStyle(
                           color: Color(0xFF653611),
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                         items: const [
                           DropdownMenuItem(
@@ -729,9 +739,7 @@ class ProductsScreenState extends State<ProductsScreen> {
                         ],
                         onChanged: (value) {
                           if (value != null) {
-                            setState(() {
-                              _sortBy = value;
-                            });
+                            setState(() => _sortBy = value);
                             _loadProducts(refresh: true);
                           }
                         },
@@ -743,18 +751,20 @@ class ProductsScreenState extends State<ProductsScreen> {
             ),
           ),
 
-          // Products Count
-          if (!_isLoading)
+          // Products Count — hanya tampil jika ada filter aktif atau hasil pencarian
+          if (!_isLoading &&
+              (_selectedCategorySlug != null ||
+                  _searchQuery.isNotEmpty ||
+                  _certifiedOnly ||
+                  _featuredOnly ||
+                  _flashSaleOnly))
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              color: Colors.grey.shade50,
               child: Text(
                 'Menampilkan $_totalProducts karya',
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ),
 
