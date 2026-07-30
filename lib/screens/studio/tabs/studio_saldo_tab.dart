@@ -5,7 +5,7 @@ import '../../../models/balance.dart';
 import '../../../models/store.dart';
 import '../../../services/api_service.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../widgets/pin_dialogs.dart';
+import '../pin_screens.dart';
 
 class StudioSaldoTab extends StatefulWidget {
   const StudioSaldoTab({Key? key}) : super(key: key);
@@ -406,18 +406,7 @@ class _StudioSaldoTabState extends State<StudioSaldoTab> {
               flex: 2,
               child: ElevatedButton.icon(
                 onPressed: canWithdraw
-                    ? () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => WithdrawDialog(
-                            availableBalance: balance!.availableBalance,
-                            bankName: store?.bankName,
-                            bankAccount: store?.bankAccount,
-                            bankHolder: store?.bankHolder,
-                            onSuccess: _loadData,
-                          ),
-                        );
-                      }
+                    ? () => _openWithdraw(balance!, store!)
                     : null,
                 icon: const Icon(Icons.account_balance_wallet, size: 18),
                 label: const Text('Cairkan Dana'),
@@ -437,25 +426,28 @@ class _StudioSaldoTabState extends State<StudioSaldoTab> {
             const SizedBox(width: 12),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => SetPinDialog(
-                      onSuccess: () => setState(() => _hasPin = true),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.lock_outline, size: 16),
-                label: const Text('PIN', style: TextStyle(fontSize: 13)),
+                onPressed: () => SetPinScreen.show(
+                  context,
+                  onSuccess: () => setState(() => _hasPin = true),
+                ),
+                icon: Icon(
+                  Icons.lock_outline,
+                  size: 16,
+                  color: _hasPin ? Colors.green : const Color(0xFFB45309),
+                ),
+                label: Text(
+                  'PIN',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _hasPin ? Colors.green : const Color(0xFFB45309),
+                  ),
+                ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   side: BorderSide(
                     color: _hasPin ? Colors.green : const Color(0xFFB45309),
                     width: 1.5,
                   ),
-                  foregroundColor: _hasPin
-                      ? Colors.green
-                      : const Color(0xFFB45309),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -464,7 +456,6 @@ class _StudioSaldoTabState extends State<StudioSaldoTab> {
             ),
           ],
         ),
-        // Info jika PIN belum diset
         if (!_hasPin) ...[
           const SizedBox(height: 8),
           Row(
@@ -480,6 +471,129 @@ class _StudioSaldoTabState extends State<StudioSaldoTab> {
         ],
       ],
     );
+  }
+
+  Future<void> _openWithdraw(Balance balance, Store store) async {
+    final amount = await _showAmountDialog(balance.availableBalance);
+    if (amount == null || !mounted) return;
+
+    final fmt = amount
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.');
+
+    final confirmed = await VerifyPinScreen.show(
+      context,
+      title: 'Masukkan PIN',
+      subtitle: 'Konfirmasi pencairan Rp $fmt',
+      onVerify: (pin) => _submitWithdraw(amount, store, pin),
+    );
+
+    if (confirmed && mounted) _loadData();
+  }
+
+  Future<double?> _showAmountDialog(double available) {
+    final ctrl = TextEditingController();
+    final fmt = available
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.');
+    return showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Jumlah Pencairan',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tersedia: Rp $fmt',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFFB45309),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+          decoration: InputDecoration(
+            prefixText: 'Rp ',
+            prefixStyle: const TextStyle(
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
+            ),
+            hintText: '50.000',
+            filled: true,
+            fillColor: const Color(0xFFF5F5F5),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Color(0xFFB45309),
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB45309),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () {
+              final v = double.tryParse(
+                ctrl.text.replaceAll(RegExp(r'[^\d]'), ''),
+              );
+              if (v != null && v >= 50000) Navigator.pop(ctx, v);
+            },
+            child: const Text('Lanjut'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _submitWithdraw(double amount, Store store, String pin) async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final resp = await _apiService.post(
+        '/api/studio/balance',
+        body: {
+          'amount': amount.toInt(),
+          'bankName': store.bankName,
+          'bankAccount': store.bankAccount,
+          'bankHolder': store.bankHolder,
+          'pin': pin,
+        },
+        token: authProvider.token,
+      );
+      return resp['success'] == true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Widget _buildMinimalInfo() {

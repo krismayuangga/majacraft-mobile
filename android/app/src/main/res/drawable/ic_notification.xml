@@ -1,10 +1,10 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-  <!-- Letter M — monochrome white for notification tray -->
-  <path
-      android:fillColor="#FFFFFF"
-      android:pathData="M2,20 L2,4 L6,4 L12,14 L18,4 L22,4 L22,20 L18,20 L18,10.5 L12,20 L6,10.5 L6,20 Z"/>
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+  <!-- MajaCraft M monogram — putih transparan untuk notification icon -->
+  <!-- Pilar kiri -->
+  <path android:fillColor="#FFFFFF"
+      android:pathData="M10,15 L10,75 Q10,82 17,82 L23,82 Q30,82 30,75 L30,42 L50,65 L70,42 L70,75 Q70,82 77,82 L83,82 Q90,82 90,75 L90,15 Q90,8 83,8 L77,8 Q70,8 70,15 L50,38 L30,15 Q30,8 23,8 L17,8 Q10,8 10,15 Z"/>
 </vector>

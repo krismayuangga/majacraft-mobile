@@ -366,17 +366,25 @@ POST /api/disputes/{disputeId}/escalate
 
 ### 4.2 Form Input Resi Retur (Buyer)
 
+> **PENTING:** Form resi hanya muncul jika buyer memang memilih **Retur + Refund** (`RETURN_REFUND`)
+> sebagai solusi. Untuk Refund Penuh / Refund Sebagian / Ganti Barang — tidak perlu retur,
+> jadi form ini TIDAK ditampilkan.
+
 ```dart
 // Tampil ketika:
+// 1. Buyer adalah current user
+// 2. requestedAction == 'RETURN_REFUND'  ← HANYA ini (bukan cek reason)
+// 3. Belum ada resi retur yang disubmit
+// 4. Status bukan PENDING_SELLER (seller harus respons dulu), CLOSED, atau CANCELLED
+// 5. Order belum REFUNDED
 bool showReturnForm = isBuyer &&
-    (dispute.requestedAction == 'RETURN_REFUND' ||
-     dispute.reason != 'NOT_RECEIVED') &&
+    dispute.requestedAction == 'RETURN_REFUND' &&
     dispute.returnTrackingNumber == null &&
-    !['CLOSED', 'CANCELLED'].contains(dispute.status) &&
+    !['PENDING_SELLER', 'CLOSED', 'CANCELLED'].contains(dispute.status) &&
     order.status != 'REFUNDED';
 
 // Form fields:
-// - Nama kurir (text input)
+// - Nama kurir (text input, contoh: JNE, J&T, SiCepat)
 // - Nomor resi retur (text input, uppercase)
 // - Penanggung ongkir: BUYER / SELLER (dropdown)
 
@@ -404,17 +412,62 @@ PATCH /api/disputes/{disputeId}
 { "action": "confirm_return_received" }
 ```
 
-### 4.4 Selesaikan Pesanan (Buyer — tidak jadi komplain)
+### 4.4 Selesaikan Pesanan (Buyer — tidak jadi komplain / deal selesai)
+
+> Tombol ini memberi pembeli pilihan untuk **menutup dispute dan merilis dana ke penjual**,
+> misalnya jika masalah sudah diselesaikan lewat chat atau buyer memilih tidak komplain lebih lanjut.
+>
+> **Tidak ditampilkan** jika buyer sudah mengirim retur (`returnTrackingNumber` sudah ada),
+> karena tidak masuk akal merilis dana ke penjual setelah barang dikembalikan.
 
 ```dart
+// Tampil ketika:
+// 1. Buyer adalah current user
+// 2. Order masih aktif: SHIPPED atau DELIVERED
+// 3. Dispute belum selesai/tutup/batal
+// 4. Buyer BELUM mengirim retur (returnTrackingNumber masih null)
+//    → Kalau sudah kirim retur, tidak boleh selesaikan pesanan
 bool showComplete = isBuyer &&
     ['SHIPPED', 'DELIVERED'].contains(order.status) &&
-    !['RESOLVED', 'CLOSED', 'CANCELLED'].contains(dispute.status);
+    !['RESOLVED', 'CLOSED', 'CANCELLED'].contains(dispute.status) &&
+    dispute.returnTrackingNumber == null; // ← Jangan tampilkan kalau sudah ada resi retur
 
 // Tombol: "Selesaikan Pesanan"
+// Tampilkan konfirmasi dialog sebelum eksekusi:
+// "Yakin selesaikan pesanan? Dana akan dilepas ke penjual."
+
 // Aksi:
 POST /api/orders/{orderId}/confirm
+// orderId = ID pesanan (bukan dispute ID)
 ```
+
+### 4.5 Info Resi Retur (tampil setelah buyer submit resi)
+
+```dart
+// Jika dispute.returnTrackingNumber sudah ada, tampilkan info retur (read-only):
+bool showReturnInfo = dispute.returnTrackingNumber != null;
+
+// Tampilkan:
+// - Kurir retur: dispute.returnCourier
+// - Nomor resi: dispute.returnTrackingNumber
+// - Penanggung ongkir: dispute.returnShippingPayer ("BUYER" / "SELLER")
+// - Tanggal kirim: dispute.returnShippedAt (jika ada)
+// - Diterima seller: dispute.returnReceivedAt (jika ada, berarti barang sudah sampai)
+// - Link cek resi: https://cekresi.com/?noresi={trackingNumber}
+```
+
+### 4.6 Ringkasan Logika Tombol
+
+Berikut tabel untuk memudahkan implementasi. Perhatikan bahwa satu dispute bisa menampilkan
+beberapa tombol sekaligus (mis. buyer melihat "Selesaikan Pesanan" + kotak info alur refund).
+
+| Kondisi requestedAction | Tombol untuk Buyer | Tombol untuk Seller | Tombol untuk Admin |
+| --- | --- | --- | --- |
+| `REFUND_FULL` / `REFUND_PARTIAL` | ✅ Selesaikan Pesanan (jika order aktif) | — | ✅ Proses Refund (via chat room web) |
+| `RETURN_REFUND` (belum ada resi) | ✅ Selesaikan Pesanan + ✅ Form Input Resi (setelah seller respons) | — | — |
+| `RETURN_REFUND` (resi sudah ada, belum diterima) | ❌ Tidak ada | ✅ Konfirmasi Terima Retur | — |
+| `RETURN_REFUND` (retur diterima) | — | — | ✅ Proses Refund (via chat room web) |
+| Semua (status SELLER_RESPONDED, seller tidak setuju) | ✅ Eskalasi ke Admin | ✅ Eskalasi ke Admin | — |
 
 ---
 
@@ -453,10 +506,42 @@ POST /api/orders/{orderId}/confirm
 - [ ] Di `OrderDetailScreen` — tambah logika tombol berdasarkan status + dispute
 - [ ] Buat `ComplainFormScreen` atau bottom sheet dengan form komplain
 - [ ] Buat `DisputeChatScreen` dengan:
-  - [ ] Header info komplain (nomor, status, alasan)
+  - [ ] Header info komplain (nomor, status, alasan, aksi diminta)
   - [ ] List pesan dengan render berbeda per role (buyer/seller/admin/system)
   - [ ] Input text + tombol kirim
   - [ ] Polling setiap 5 detik
-  - [ ] Tombol aksi kondisional (eskalasi, retur, konfirmasi)
+  - [ ] **Tombol "Selesaikan Pesanan"** — muncul untuk buyer jika order SHIPPED/DELIVERED dan belum ada resi retur (lihat 4.4)
+  - [ ] **Tombol "Eskalasi ke Admin"** — muncul saat SELLER_RESPONDED & seller tidak setuju (4.1)
+  - [ ] **Form Input Resi Retur** — HANYA untuk requestedAction == RETURN_REFUND, setelah seller respons (4.2)
+  - [ ] **Info Resi Retur (read-only)** — tampil setelah resi disubmit (4.5)
+  - [ ] **Tombol "Konfirmasi Terima Retur"** — untuk seller setelah buyer submit resi (4.3)
 - [ ] Handle upload foto bukti di form komplain
-- [ ] Handle form input resi retur (field kurir + nomor resi + penanggung ongkir)
+- [ ] Konfirmasi dialog sebelum aksi destruktif (selesaikan pesanan, eskalasi)
+
+### Bug yang Perlu Diperbaiki di Kode Flutter Existing
+
+Jika sudah ada implementasi `DisputeChatScreen`, cek dan perbaiki kondisi berikut:
+
+```dart
+// ❌ SALAH - menyebabkan form retur muncul untuk semua komplain kecuali NOT_RECEIVED
+bool showReturnForm = isBuyer &&
+    (dispute.requestedAction == 'RETURN_REFUND' || dispute.reason != 'NOT_RECEIVED') && ...
+
+// ✅ BENAR - hanya muncul untuk RETURN_REFUND
+bool showReturnForm = isBuyer &&
+    dispute.requestedAction == 'RETURN_REFUND' &&
+    dispute.returnTrackingNumber == null &&
+    !['PENDING_SELLER', 'CLOSED', 'CANCELLED'].contains(dispute.status) &&
+    order.status != 'REFUNDED';
+
+// ❌ SALAH - tidak mengecek apakah retur sudah dikirim
+bool showComplete = isBuyer &&
+    ['SHIPPED', 'DELIVERED'].contains(order.status) &&
+    !['RESOLVED', 'CLOSED', 'CANCELLED'].contains(dispute.status);
+
+// ✅ BENAR - sembunyikan jika buyer sudah kirim retur
+bool showComplete = isBuyer &&
+    ['SHIPPED', 'DELIVERED'].contains(order.status) &&
+    !['RESOLVED', 'CLOSED', 'CANCELLED'].contains(dispute.status) &&
+    dispute.returnTrackingNumber == null;
+```

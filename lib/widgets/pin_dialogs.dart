@@ -54,7 +54,7 @@ class _SetPinDialogState extends State<SetPinDialog> {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'type': 'PIN_SETUP'}),
+        body: jsonEncode({'type': 'withdrawal'}),
       );
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
       if (resp.statusCode == 200 && data['success'] == true) {
@@ -79,8 +79,8 @@ class _SetPinDialogState extends State<SetPinDialog> {
     final pin = _pinController.text.trim();
     final pinConfirm = _pinConfirmController.text.trim();
 
-    if (otp.length < 4) {
-      setState(() => _error = 'Masukkan kode OTP dari email');
+    if (otp.length != 6) {
+      setState(() => _error = 'Kode OTP harus 6 digit');
       return;
     }
     if (pin.length != 6) {
@@ -208,11 +208,11 @@ class _SetPinDialogState extends State<SetPinDialog> {
 
                   // OTP Input
                   const Text(
-                    'KODE OTP *',
+                    'KODE OTP (6 Digit dari Email)',
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _amber,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -221,15 +221,32 @@ class _SetPinDialogState extends State<SetPinDialog> {
                     controller: _otpController,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    maxLength: 8,
+                    maxLength: 6,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      letterSpacing: 8,
+                    ),
                     decoration: InputDecoration(
-                      hintText: 'Masukkan kode dari email',
+                      hintText: '0  0  0  0  0  0',
+                      filled: true,
+                      fillColor: const Color(0xFFF8F8F8),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFFCCCCCC)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: _amber, width: 1.5),
+                      ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 10,
+                        vertical: 12,
                       ),
                       counterText: '',
                     ),
