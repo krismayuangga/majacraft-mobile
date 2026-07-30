@@ -51,6 +51,9 @@ class ProductsScreenState extends State<ProductsScreen> {
       _loadCategories();
     });
 
+    // Daftarkan listener infinite scroll
+    _scrollController.addListener(_onScroll);
+
     // Auto focus search if requested
     if (widget.autoFocusSearch) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -145,6 +148,20 @@ class ProductsScreenState extends State<ProductsScreen> {
     }
   }
 
+  /// Bangun query params dari state filter saat ini
+  Map<String, String> _buildQueryParams(int page) {
+    final q = <String, String>{'page': page.toString(), 'limit': '20'};
+    if (_selectedCategorySlug != null) q['kategori'] = _selectedCategorySlug!;
+    if (_searchQuery.isNotEmpty) q['search'] = _searchQuery;
+    if (_sortBy.isNotEmpty) q['sort'] = _sortBy;
+    if (_minPrice != null) q['minPrice'] = _minPrice.toString();
+    if (_maxPrice != null) q['maxPrice'] = _maxPrice.toString();
+    if (_certifiedOnly) q['sertifikat'] = '1';
+    if (_featuredOnly) q['featured'] = '1';
+    if (_flashSaleOnly) q['flashSale'] = '1';
+    return q;
+  }
+
   Future<void> _loadProducts({bool refresh = false}) async {
     if (refresh) {
       setState(() {
@@ -157,37 +174,7 @@ class ProductsScreenState extends State<ProductsScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-      final queryParams = <String, String>{
-        'page': _currentPage.toString(),
-        'limit': '20',
-      };
-
-      if (_selectedCategorySlug != null) {
-        queryParams['kategori'] = _selectedCategorySlug!;
-      }
-      if (_searchQuery.isNotEmpty) {
-        queryParams['search'] = _searchQuery;
-      }
-      if (_sortBy.isNotEmpty) {
-        queryParams['sort'] = _sortBy;
-      }
-      if (_minPrice != null) {
-        queryParams['minPrice'] = _minPrice.toString();
-      }
-      if (_maxPrice != null) {
-        queryParams['maxPrice'] = _maxPrice.toString();
-      }
-      if (_certifiedOnly) {
-        queryParams['sertifikat'] = '1';
-      }
-      if (_featuredOnly) {
-        queryParams['featured'] = '1';
-      }
-      if (_flashSaleOnly) {
-        queryParams['flashSale'] = '1';
-      }
-
-      final queryString = queryParams.entries
+      final queryString = _buildQueryParams(_currentPage).entries
           .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
           .join('&');
 
@@ -200,7 +187,6 @@ class ProductsScreenState extends State<ProductsScreen> {
         final data = response['data'];
         final items = data['items'] as List? ?? [];
         final total = data['total'] ?? 0;
-
         setState(() {
           _products = items.map((item) => Product.fromJson(item)).toList();
           _totalProducts = total;
@@ -208,15 +194,11 @@ class ProductsScreenState extends State<ProductsScreen> {
           _isLoading = false;
         });
       } else {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       print('[ProductsScreen] Error loading products: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
@@ -230,37 +212,7 @@ class ProductsScreenState extends State<ProductsScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-      final queryParams = <String, String>{
-        'page': _currentPage.toString(),
-        'limit': '20',
-      };
-
-      if (_selectedCategorySlug != null) {
-        queryParams['kategori'] = _selectedCategorySlug!;
-      }
-      if (_searchQuery.isNotEmpty) {
-        queryParams['search'] = _searchQuery;
-      }
-      if (_sortBy.isNotEmpty) {
-        queryParams['sort'] = _sortBy;
-      }
-      if (_minPrice != null) {
-        queryParams['minPrice'] = _minPrice.toString();
-      }
-      if (_maxPrice != null) {
-        queryParams['maxPrice'] = _maxPrice.toString();
-      }
-      if (_certifiedOnly) {
-        queryParams['sertifikat'] = '1';
-      }
-      if (_featuredOnly) {
-        queryParams['featured'] = '1';
-      }
-      if (_flashSaleOnly) {
-        queryParams['flashSale'] = '1';
-      }
-
-      final queryString = queryParams.entries
+      final queryString = _buildQueryParams(_currentPage).entries
           .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
           .join('&');
 
@@ -273,19 +225,16 @@ class ProductsScreenState extends State<ProductsScreen> {
         final data = response['data'];
         final items = data['items'] as List? ?? [];
         final total = data['total'] ?? 0;
-
         setState(() {
           _products.addAll(items.map((item) => Product.fromJson(item)));
           _hasMore = _products.length < total;
           _isLoadingMore = false;
         });
       } else {
-        setState(() {
-          _isLoadingMore = false;
-        });
+        setState(() => _isLoadingMore = false);
       }
     } catch (e) {
-      print('[ProductsScreen] Error loading more products: $e');
+      print('[ProductsScreen] Error loading more: $e');
       setState(() {
         _isLoadingMore = false;
         _currentPage--;
