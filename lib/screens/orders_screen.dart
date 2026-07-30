@@ -281,7 +281,10 @@ class _OrdersScreenState extends State<OrdersScreen>
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
-                            return _OrderCard(order: _orders[index]);
+                            return _OrderCard(
+                              order: _orders[index],
+                              onRefresh: _loadOrders,
+                            );
                           },
                         ),
                       ),
@@ -294,10 +297,21 @@ class _OrdersScreenState extends State<OrdersScreen>
   }
 }
 
-class _OrderCard extends StatelessWidget {
+class _OrderCard extends StatefulWidget {
   final Order order;
+  final VoidCallback? onRefresh;
 
-  const _OrderCard({required this.order});
+  const _OrderCard({required this.order, this.onRefresh});
+
+  @override
+  State<_OrderCard> createState() => _OrderCardState();
+}
+
+class _OrderCardState extends State<_OrderCard> {
+  // Track locally reviewed productIds so button updates immediately after submit
+  final Set<String> _locallyReviewed = {};
+
+  Order get order => widget.order;
 
   Color _getStatusColor() {
     final colorHex = order.statusColor.replaceAll('#', '');
@@ -595,11 +609,12 @@ class _OrderCard extends StatelessWidget {
         );
 
       case 'COMPLETED':
-        // order dari list mungkin tidak punya reviews → tampil "Beri Ulasan"
-        // detail akan dicek saat form dibuka; jika sudah review, ditangani gracefully
-        final unreviewed = order.unreviewedItems;
-        final allReviewed =
-            unreviewed.isEmpty && order.reviewedProductIds.isNotEmpty;
+        final reviewed = order.reviewedProductIds.toSet()
+          ..addAll(_locallyReviewed);
+        final unreviewed = order.items
+            .where((i) => !reviewed.contains(i.productId))
+            .toList();
+        final allReviewed = unreviewed.isEmpty && reviewed.isNotEmpty;
         if (allReviewed) {
           return OutlinedButton.icon(
             onPressed: null,
@@ -627,7 +642,12 @@ class _OrderCard extends StatelessWidget {
                 builder: (_) => ReviewFormScreen(
                   orderId: order.id,
                   item: itemToReview,
-                  onSuccess: () {},
+                  onSuccess: () {
+                    setState(
+                      () => _locallyReviewed.add(itemToReview.productId),
+                    );
+                    widget.onRefresh?.call();
+                  },
                 ),
               ),
             );
