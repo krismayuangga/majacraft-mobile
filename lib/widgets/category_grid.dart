@@ -10,52 +10,52 @@ class CategoryGrid extends StatelessWidget {
   final List<CategoryData> categories = const [
     CategoryData(
       name: 'Kerajinan Batu',
-      slug: 'cat-batu',
+      slug: 'kerajinan-batu',
       imageUrl: 'https://majacraft.id/images/cat-batu.jpg',
     ),
     CategoryData(
       name: 'Batik & Kain',
-      slug: 'cat-batik',
+      slug: 'batik-kain',
       imageUrl: 'https://majacraft.id/images/cat-batik.jpg',
     ),
     CategoryData(
       name: 'Ukiran Kayu',
-      slug: 'cat-kayu',
+      slug: 'ukiran-kayu',
       imageUrl: 'https://majacraft.id/images/cat-kayu.jpg',
     ),
     CategoryData(
       name: 'Perhiasan & Logam',
-      slug: 'cat-logam',
+      slug: 'perhiasan-logam',
       imageUrl: 'https://majacraft.id/images/cat-logam.jpg',
     ),
     CategoryData(
       name: 'Fotografi',
-      slug: 'cat-fotografi',
+      slug: 'fotografi',
       imageUrl: 'https://majacraft.id/images/cat-fotografi.jpg',
     ),
     CategoryData(
       name: 'Wayang & Topeng',
-      slug: 'cat-wayang',
+      slug: 'wayang-topeng',
       imageUrl: 'https://majacraft.id/images/cat-wayang.jpg',
     ),
     CategoryData(
       name: 'Keramik & Gerabah',
-      slug: 'cat-keramik',
+      slug: 'keramik-gerabah',
       imageUrl: 'https://majacraft.id/images/cat-keramik.jpg',
     ),
     CategoryData(
       name: 'Tas & Aksesoris',
-      slug: 'cat-tas',
+      slug: 'tas-aksesoris',
       imageUrl: 'https://majacraft.id/images/cat-tas.jpg',
     ),
     CategoryData(
       name: 'Lukisan',
-      slug: 'cat-lukisan',
+      slug: 'lukisan',
       imageUrl: 'https://majacraft.id/images/cat-lukisan.jpg',
     ),
     CategoryData(
       name: 'Lainnya',
-      slug: 'cat-lainnya',
+      slug: 'lainnya',
       imageUrl: 'https://majacraft.id/images/cat-lainnya.jpg',
     ),
   ];
