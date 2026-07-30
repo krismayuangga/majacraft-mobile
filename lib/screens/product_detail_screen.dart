@@ -257,7 +257,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 icon: const Icon(Icons.share, color: Colors.black87),
                 onPressed: () {
                   final product = _fullProduct ?? widget.product;
-                  final url = 'https://majacraft.id/products/${product.id}';
+                  final url = 'https://majacraft.id/produk/${product.slug}';
                   Share.share(
                     '${product.name}\nRp${product.price.toStringAsFixed(0)}\n\nLihat di MajaCraft: $url',
                     subject: product.name,

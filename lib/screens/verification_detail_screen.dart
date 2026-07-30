@@ -34,8 +34,8 @@ class VerificationDetailScreen extends StatelessWidget {
             icon: const Icon(Icons.share, color: Colors.white),
             onPressed: () {
               final url = product.certificateId != null
-                  ? 'https://majacraft.id/certificate/${product.certificateId}'
-                  : 'https://majacraft.id/products/${product.id}';
+                  ? 'https://majacraft.id/verifikasi/${product.certificateId}'
+                  : 'https://majacraft.id/produk/${product.slug}';
               Share.share(
                 'Sertifikat Phygital: ${product.name}\nVerifikasi keaslian karya ini di:\n$url',
                 subject: 'Sertifikat Phygital - ${product.name}',
