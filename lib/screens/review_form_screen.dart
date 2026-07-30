@@ -120,7 +120,32 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
           );
         }
       } else {
-        throw Exception(resp['error'] ?? 'Gagal mengirim ulasan');
+        final errMsg = resp['error']?.toString() ?? 'Gagal mengirim ulasan';
+        // Jika sudah pernah review, tutup form dan info user
+        if (errMsg.contains('sudah') || errMsg.contains('already')) {
+          if (mounted) {
+            Navigator.pop(context);
+            widget.onSuccess(); // refresh list agar tombol update
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.white),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Produk ini sudah pernah Anda ulas sebelumnya',
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+          return;
+        }
+        throw Exception(errMsg);
       }
     } catch (e) {
       if (mounted) {

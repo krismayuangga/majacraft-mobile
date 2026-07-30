@@ -595,8 +595,12 @@ class _OrderCard extends StatelessWidget {
         );
 
       case 'COMPLETED':
+        // order dari list mungkin tidak punya reviews → tampil "Beri Ulasan"
+        // detail akan dicek saat form dibuka; jika sudah review, ditangani gracefully
         final unreviewed = order.unreviewedItems;
-        if (unreviewed.isEmpty) {
+        final allReviewed =
+            unreviewed.isEmpty && order.reviewedProductIds.isNotEmpty;
+        if (allReviewed) {
           return OutlinedButton.icon(
             onPressed: null,
             icon: const Icon(Icons.star, size: 16, color: Colors.green),
@@ -611,6 +615,10 @@ class _OrderCard extends StatelessWidget {
             ),
           );
         }
+        // Gunakan item pertama untuk form; jika sudah review, form akan handle gracefully
+        final itemToReview = unreviewed.isNotEmpty
+            ? unreviewed.first
+            : order.items.first;
         return OutlinedButton.icon(
           onPressed: () {
             Navigator.push(
@@ -618,7 +626,7 @@ class _OrderCard extends StatelessWidget {
               MaterialPageRoute(
                 builder: (_) => ReviewFormScreen(
                   orderId: order.id,
-                  item: unreviewed.first,
+                  item: itemToReview,
                   onSuccess: () {},
                 ),
               ),
