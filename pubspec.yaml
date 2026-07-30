@@ -80,6 +80,9 @@ dependencies:
   # Share to other apps (WhatsApp, sosmed, copy link)
   share_plus: ^10.1.4
 
+  # Deep linking — App Links (Android) / Universal Links (iOS)
+  app_links: ^6.4.0
+
   # Image caching — avoids re-downloading banners & categories every time
   cached_network_image: ^3.3.1
 

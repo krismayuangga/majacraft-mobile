@@ -6,7 +6,12 @@ import 'providers/auth_provider.dart';
 import 'providers/wishlist_provider.dart';
 import 'utils/nav_key.dart';
 import 'screens/splash_screen.dart';
+import 'screens/product_detail_screen.dart';
+import 'screens/store_detail_screen.dart';
+import 'services/api_service.dart';
+import 'models/product.dart';
 import 'services/fcm_service.dart';
+import 'services/deep_link_service.dart';
 import 'widgets/main_screen.dart';
 
 // Re-export navigatorKey agar kode lain yang sudah import main.dart tetap bisa
@@ -26,6 +31,9 @@ void main() async {
 
   // onBackgroundMessage WAJIB dipanggil sebelum runApp() per Firebase docs
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Inisialisasi deep link handler
+  DeepLinkService().initialize();
 
   // runApp() langsung — FCMService.initialize() (permission request yang lambat)
   // dipindah ke SplashScreen agar berjalan paralel dengan animasi
@@ -50,8 +58,22 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
         ),
-        home:
-            const SplashScreen(), // Always start with SplashScreen → Onboarding or AppInitializer
+        home: const SplashScreen(),
+        onGenerateRoute: (settings) {
+          if (settings.name == '/product-by-slug') {
+            final slug = settings.arguments as String;
+            return MaterialPageRoute(
+              builder: (_) => _ProductBySlugLoader(slug: slug),
+            );
+          }
+          if (settings.name == '/store') {
+            final slug = settings.arguments as String;
+            return MaterialPageRoute(
+              builder: (_) => StoreDetailScreen(storeSlug: slug),
+            );
+          }
+          return null;
+        },
       ),
     );
   }
@@ -146,5 +168,48 @@ class _AppInitializerState extends State<AppInitializer> {
         return MainScreen();
       },
     );
+  }
+}
+
+/// Load produk by slug untuk deep link, lalu buka ProductDetailScreen
+class _ProductBySlugLoader extends StatefulWidget {
+  final String slug;
+  const _ProductBySlugLoader({required this.slug});
+
+  @override
+  State<_ProductBySlugLoader> createState() => _ProductBySlugLoaderState();
+}
+
+class _ProductBySlugLoaderState extends State<_ProductBySlugLoader> {
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final api = ApiService();
+      final resp = await api.get('/api/products?search=${widget.slug}&limit=1');
+      final items = resp['data']?['items'] as List? ?? [];
+      if (items.isNotEmpty && mounted) {
+        final product = Product.fromJson(items.first);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailScreen(product: product),
+          ),
+        );
+      } else if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (_) {
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }
