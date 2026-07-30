@@ -104,7 +104,7 @@ class StudioProduct {
       kondisi: json['kondisi']?.toString(),
       tags: tagsList,
       imageUrls: images,
-      status: json['status']?.toString() ?? 'PENDING_REVIEW',
+      status: _deriveStatus(json),
       moderationNotes: json['moderationNotes']?.toString(),
       soldCount: _parseInt(json['soldCount']),
       rating: _parseDouble(json['rating']),
@@ -135,6 +135,19 @@ class StudioProduct {
       'tags': tags,
       'imageUrls': imageUrls,
     };
+  }
+
+  /// Derive status dari boolean fields backend (isActive, isModerated, isSoldOffline)
+  static String _deriveStatus(Map<String, dynamic> json) {
+    // Jika ada field 'status' eksplisit, pakai itu
+    if (json['status'] != null) return json['status'].toString();
+
+    final isActive = json['isActive'] == true;
+    final isSoldOffline = json['isSoldOffline'] == true;
+
+    if (isSoldOffline) return 'SOLD_OFFLINE';
+    if (!isActive) return 'INACTIVE';
+    return 'ACTIVE'; // isActive=true, termasuk yang belum dimoderasi
   }
 
   static int _parseInt(dynamic value) {
