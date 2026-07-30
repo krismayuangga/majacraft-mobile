@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
@@ -257,14 +258,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 onPressed: () {
                   final product = _fullProduct ?? widget.product;
                   final url = 'https://majacraft.id/products/${product.id}';
-                  SharePlus.instance.share(
-                    ShareParams(
-                      text:
-                          '${product.name}\n'
-                          'Rp${product.price.toStringAsFixed(0)}\n\n'
-                          'Lihat di MajaCraft: $url',
-                      subject: product.name,
-                    ),
+                  Share.share(
+                    '${product.name}\nRp${product.price.toStringAsFixed(0)}\n\nLihat di MajaCraft: $url',
+                    subject: product.name,
                   );
                 },
               ),

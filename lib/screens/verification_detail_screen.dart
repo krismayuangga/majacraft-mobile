@@ -36,13 +36,9 @@ class VerificationDetailScreen extends StatelessWidget {
               final url = product.certificateId != null
                   ? 'https://majacraft.id/certificate/${product.certificateId}'
                   : 'https://majacraft.id/products/${product.id}';
-              SharePlus.instance.share(
-                ShareParams(
-                  text:
-                      'Sertifikat Phygital: ${product.name}\n'
-                      'Verifikasi keaslian karya ini di:\n$url',
-                  subject: 'Sertifikat Phygital - ${product.name}',
-                ),
+              Share.share(
+                'Sertifikat Phygital: ${product.name}\nVerifikasi keaslian karya ini di:\n$url',
+                subject: 'Sertifikat Phygital - ${product.name}',
               );
             },
           ),
