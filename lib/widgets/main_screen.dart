@@ -121,7 +121,21 @@ class _MainScreenState extends State<MainScreen> {
   // Method untuk switch ke tab profile
   void goToProfile() {
     setState(() {
-      _currentIndex = 4; // Index tab "Akun" (was 5 before removing chat tab)
+      _currentIndex = 4; // Index tab "Akun"
+    });
+  }
+
+  void goToStudio() {
+    setState(() => _currentIndex = 4);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 150), () {
+        final ctx = mainScreenKey.currentContext;
+        if (ctx != null) {
+          Navigator.of(
+            ctx,
+          ).push(MaterialPageRoute(builder: (_) => const StudioScreen()));
+        }
+      });
     });
   }
 

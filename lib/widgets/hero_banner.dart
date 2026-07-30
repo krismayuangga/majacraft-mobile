@@ -42,6 +42,15 @@ class _HeroBannerState extends State<HeroBanner> {
       accent: 'Sertifikat Digital',
       image: 'https://majacraft.id/images/banner-3.jpg',
     ),
+    BannerData(
+      title: 'Lukisan Maestro Nusantara',
+      subtitle:
+          'Karya lukis epic bergaya Wayang dan Ramayana dari seniman maestro Indonesia',
+      primaryCta: 'Lihat Koleksi Lukisan',
+      secondaryCta: 'Jual Karya',
+      accent: 'Seni Visual Nusantara',
+      image: 'https://majacraft.id/images/banner-4.jpg',
+    ),
   ];
 
   @override
@@ -148,12 +157,14 @@ class _BannerItem extends StatelessWidget {
     } else if (banner.title == 'Kerajinan Batu Candi') {
       // Lihat Koleksi → kerajinan-batu category
       mainScreenKey.currentState?.goToProductsWithCategory('kerajinan-batu');
+    } else if (banner.title == 'Lukisan Maestro Nusantara') {
+      mainScreenKey.currentState?.goToProductsWithCategory('lukisan');
     }
   }
 
   void _handleSecondaryAction(BuildContext context) {
-    // Jual Karya → Navigate to Profile tab (Akun) where Studio Seniman option is
-    mainScreenKey.currentState?.goToProfile();
+    // Jual Karya → langsung ke Studio Seniman
+    mainScreenKey.currentState?.goToStudio();
   }
 
   @override
