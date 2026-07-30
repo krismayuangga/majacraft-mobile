@@ -147,6 +147,8 @@ class FCMService {
           importance: Importance.high,
           priority: Priority.high,
           showWhen: true,
+          icon: '@drawable/ic_notification',
+          color: Color(0xFF653611),
         );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
