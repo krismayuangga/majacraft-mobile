@@ -93,7 +93,33 @@ class ApiService {
     }
   }
 
-  // DELETE request
+  // Multipart file upload — returns URL string from response data.url
+  Future<String?> uploadFile(
+    String endpoint,
+    dynamic file, {
+    String fieldName = 'file',
+    String? token,
+    Map<String, String>? extraFields,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+      final request = http.MultipartRequest('POST', url);
+      if (token != null) request.headers['Authorization'] = 'Bearer $token';
+      if (extraFields != null) request.fields.addAll(extraFields);
+      request.files.add(
+        await http.MultipartFile.fromPath(fieldName, file.path),
+      );
+
+      final streamed = await request.send();
+      final body = await streamed.stream.bytesToString();
+      final decoded = jsonDecode(body) as Map<String, dynamic>;
+      final data = decoded['data'] as Map<String, dynamic>?;
+      return data?['url']?.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>> delete(
     String endpoint, {
     Map<String, dynamic>? body,

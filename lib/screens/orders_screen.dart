@@ -6,6 +6,7 @@ import '../models/order.dart';
 import '../widgets/custom_app_bar.dart';
 import 'auth/login_screen.dart';
 import 'order_detail_screen.dart';
+import 'review_form_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -594,8 +595,42 @@ class _OrderCard extends StatelessWidget {
         );
 
       case 'COMPLETED':
-        return OutlinedButton(
-          onPressed: goToDetail,
+        final unreviewed = order.unreviewedItems;
+        if (unreviewed.isEmpty) {
+          return OutlinedButton.icon(
+            onPressed: null,
+            icon: const Icon(Icons.star, size: 16, color: Colors.green),
+            label: const Text('Sudah Diulas', style: TextStyle(fontSize: 13)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.grey,
+              side: BorderSide(color: Colors.grey.shade300),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+          );
+        }
+        return OutlinedButton.icon(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ReviewFormScreen(
+                  orderId: order.id,
+                  item: unreviewed.first,
+                  onSuccess: () {},
+                ),
+              ),
+            );
+          },
+          icon: const Icon(Icons.star_border, size: 16),
+          label: Text(
+            unreviewed.length > 1
+                ? 'Beri Ulasan (${unreviewed.length})'
+                : 'Beri Ulasan',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF653611),
             side: const BorderSide(color: Color(0xFF653611)),
@@ -603,10 +638,6 @@ class _OrderCard extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
-          ),
-          child: const Text(
-            'Beri Ulasan',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
         );
 

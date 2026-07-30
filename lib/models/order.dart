@@ -91,6 +91,7 @@ class Order {
   final String? recipientCity;
   final String? recipientProvince;
   final List<DisputeSummary> disputes;
+  final List<String> reviewedProductIds; // productId yang sudah diulas
 
   Order({
     required this.id,
@@ -118,6 +119,7 @@ class Order {
     this.recipientCity,
     this.recipientProvince,
     this.disputes = const [],
+    this.reviewedProductIds = const [],
   });
 
   static int _parseInt(dynamic v) {
@@ -172,6 +174,10 @@ class Order {
       recipientProvince: address['province']?.toString(),
       disputes: (json['disputes'] as List? ?? [])
           .map((d) => DisputeSummary.fromJson(d as Map<String, dynamic>))
+          .toList(),
+      reviewedProductIds: (json['reviews'] as List? ?? [])
+          .map((r) => (r is Map ? r['productId'] : r)?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
           .toList(),
     );
   }
@@ -230,6 +236,13 @@ class Order {
 
   /// Apakah bisa dibatalkan
   bool get canCancel => status == 'PENDING_PAYMENT';
+
+  bool get canReview => status == 'COMPLETED';
+
+  List<OrderItem> get unreviewedItems {
+    final reviewed = reviewedProductIds.toSet();
+    return items.where((i) => !reviewed.contains(i.productId)).toList();
+  }
 
   /// Apakah bisa konfirmasi diterima
   bool get canConfirm => status == 'DELIVERED' || status == 'SHIPPED';
