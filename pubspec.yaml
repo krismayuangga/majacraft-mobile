@@ -86,6 +86,9 @@ dependencies:
   # Save image/file to device gallery
   gal: ^2.3.0
 
+  # QR/Barcode scanner untuk verifikasi sertifikat
+  mobile_scanner: ^6.0.0
+
   # Image caching — avoids re-downloading banners & categories every time
   cached_network_image: ^3.3.1
 

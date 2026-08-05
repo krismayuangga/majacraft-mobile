@@ -6,6 +6,9 @@ import '../widgets/flash_sale_banner.dart';
 import '../widgets/product_card.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/main_screen.dart';
+import '../widgets/jelajahi_section.dart';
+import 'ruang_budaya_screen.dart';
+import 'galeri_sertifikat_screen.dart';
 import '../models/product.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
@@ -153,6 +156,36 @@ class _HomeScreenState extends State<HomeScreen> {
               isLoading: _isLoadingFeatured,
               onViewAll: () {
                 widget.onNavigateToProducts?.call(initialFeatured: true);
+              },
+            ),
+
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+
+            // Jelajahi MajaCraft — 3 shortcut cards
+            JelajahiSection(
+              onNavigate: (route) {
+                switch (route) {
+                  case 'studio':
+                    mainScreenKey.currentState?.goToStudio();
+                    break;
+                  case 'ruang-budaya':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RuangBudayaScreen(),
+                      ),
+                    );
+                    break;
+                  case 'verifikasi':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const GaleriSertifikatScreen(),
+                      ),
+                    );
+                    break;
+                }
               },
             ),
 

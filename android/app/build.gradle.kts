@@ -36,7 +36,7 @@ android {
         applicationId = "id.majacraft.majacraft_mobile"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 23  // mobile_scanner camera library requires API 23+
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
