@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/product.dart';
 import '../screens/product_detail_screen.dart';
 import '../providers/wishlist_provider.dart';
@@ -96,20 +97,23 @@ class _ProductCardState extends State<ProductCard> {
                       ),
                       child: AspectRatio(
                         aspectRatio: 1,
-                        child: Image.network(
-                          widget.product.image,
+                        child: CachedNetworkImage(
+                          imageUrl: widget.product.image,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey.shade200,
-                              child: const Center(
-                                child: Icon(
-                                  Icons.image_not_supported,
-                                  color: Colors.grey,
-                                ),
+                          // Batasi ukuran decode di memori agar tidak boros RAM
+                          memCacheWidth: 400,
+                          memCacheHeight: 400,
+                          placeholder: (context, url) =>
+                              Container(color: Colors.grey.shade100),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey.shade200,
+                            child: const Center(
+                              child: Icon(
+                                Icons.image_not_supported,
+                                color: Colors.grey,
                               ),
-                            );
-                          },
+                            ),
+                          ),
                         ),
                       ),
                     ),

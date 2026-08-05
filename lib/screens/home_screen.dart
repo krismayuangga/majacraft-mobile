@@ -298,20 +298,22 @@ class _ProductSection extends StatelessWidget {
               ),
             )
           else
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.65,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
+            SizedBox(
+              height: 280,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: products.length,
                 itemBuilder: (context, index) {
-                  return ProductCard(product: products[index]);
+                  return SizedBox(
+                    width: 160,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: index < products.length - 1 ? 12 : 0,
+                      ),
+                      child: ProductCard(product: products[index]),
+                    ),
+                  );
                 },
               ),
             ),
