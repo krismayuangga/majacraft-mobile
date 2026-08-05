@@ -122,7 +122,7 @@ class ProductsScreenState extends State<ProductsScreen> {
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent * 0.8 &&
+            _scrollController.position.maxScrollExtent * 0.6 &&
         !_isLoadingMore &&
         _hasMore) {
       _loadMoreProducts();
@@ -750,6 +750,9 @@ class ProductsScreenState extends State<ProductsScreen> {
                 : GridView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(12),
+                    // Reduce rebuild overhead
+                    addAutomaticKeepAlives: false,
+                    addRepaintBoundaries: true,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
@@ -767,7 +770,9 @@ class ProductsScreenState extends State<ProductsScreen> {
                           ),
                         );
                       }
-                      return ProductCard(product: _products[index]);
+                      return RepaintBoundary(
+                        child: ProductCard(product: _products[index]),
+                      );
                     },
                   ),
           ),
