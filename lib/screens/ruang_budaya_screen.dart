@@ -3,6 +3,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import '../models/ruang_budaya.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_app_bar.dart';
+import 'ruang_budaya_detail_screen.dart';
 
 class RuangBudayaScreen extends StatefulWidget {
   const RuangBudayaScreen({super.key});
@@ -213,11 +214,10 @@ class _RuangBudayaScreenState extends State<RuangBudayaScreen>
       ),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to post detail
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Detail: ${post.title}'),
-              backgroundColor: const Color(0xFF1C1A14),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RuangBudayaDetailScreen(post: post),
             ),
           );
         },
