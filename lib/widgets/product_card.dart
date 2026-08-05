@@ -232,24 +232,23 @@ class _ProductCardState extends State<ProductCard> {
                 // Product Info
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Product Name — tidak pakai Expanded agar tidak ada space kosong
+                        // Product Name — 3 baris agar card padat dan enak dilihat
                         Text(
                           widget.product.name,
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            height: 1.2,
+                            height: 1.3,
                           ),
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
 
-                        const SizedBox(height: 2),
+                        const Spacer(),
 
                         // Price
                         Row(
@@ -281,7 +280,7 @@ class _ProductCardState extends State<ProductCard> {
                           ],
                         ),
 
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
 
                         // Seller name (store)
                         Row(

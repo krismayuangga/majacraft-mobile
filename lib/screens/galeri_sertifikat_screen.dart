@@ -231,7 +231,7 @@ class _GaleriSertifikatScreenState extends State<GaleriSertifikatScreen> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          mainAxisExtent: 280,
+                          mainAxisExtent: 270,
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
                         ),
@@ -272,9 +272,6 @@ class _CertCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final thumbUrl =
         'https://majacraft.id/uploads/certificates/thumbs/${cert.id}.jpg';
-    final shortId = cert.id.length > 18
-        ? '${cert.id.substring(0, 12)}...'
-        : cert.id;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -377,7 +374,7 @@ class _CertCard extends StatelessWidget {
             ),
             // Info
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -386,24 +383,38 @@ class _CertCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                       height: 1.3,
                     ),
                   ),
+                  const SizedBox(height: 3),
+                  if (cert.artisan.isNotEmpty)
+                    Text(
+                      cert.artisan,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  if (cert.studio.isNotEmpty)
+                    Text(
+                      cert.studio,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
                   const SizedBox(height: 4),
                   Text(
-                    cert.sellerName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    shortId,
+                    cert.id,
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 9,
                       color: Colors.grey.shade500,
                       fontFamily: 'monospace',
                     ),
@@ -506,14 +517,15 @@ class _QRScannerScreenState extends State<_QRScannerScreen> {
 // --- Data model -------------------------------------------------------------
 
 class _CertItem {
-  final String id, productName, sellerName;
+  final String id, productName, artisan, studio;
   final String? nftTokenId;
   final bool storeVerified;
 
   _CertItem({
     required this.id,
     required this.productName,
-    required this.sellerName,
+    required this.artisan,
+    required this.studio,
     this.nftTokenId,
     this.storeVerified = false,
   });
@@ -521,7 +533,8 @@ class _CertItem {
   factory _CertItem.fromJson(Map<String, dynamic> j) => _CertItem(
     id: j['id']?.toString() ?? '',
     productName: j['productName']?.toString() ?? '',
-    sellerName: '${j['sellerName'] ?? ''} � ${j['sellerStore'] ?? ''}',
+    artisan: j['sellerName']?.toString() ?? '',
+    studio: j['sellerStore']?.toString() ?? '',
     nftTokenId: j['nftTokenId']?.toString(),
     storeVerified:
         (j['product'] as Map<String, dynamic>?)?['store']?['isVerified'] ==
