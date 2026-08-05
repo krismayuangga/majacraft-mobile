@@ -77,6 +77,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _heightController = TextEditingController();
   final _originController = TextEditingController();
   final _materialController = TextEditingController();
+  final _creatorNameController = TextEditingController();
   final _tagsController = TextEditingController();
 
   // Form state
@@ -108,6 +109,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _heightController.dispose();
     _originController.dispose();
     _materialController.dispose();
+    _creatorNameController.dispose();
     _tagsController.dispose();
     super.dispose();
   }
@@ -374,6 +376,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         'material': _materialController.text.trim().isNotEmpty
             ? _materialController.text.trim()
             : null,
+        'creatorName': _creatorNameController.text.trim().isNotEmpty
+            ? _creatorNameController.text.trim()
+            : null,
         'kondisi': _selectedKondisi,
         'tags': _tagsController.text.trim().isNotEmpty
             ? _tagsController.text
@@ -582,6 +587,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     controller: _originController,
                     label: 'Asal Daerah',
                     hint: 'Yogyakarta',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _creatorNameController,
+                    label: 'Nama Pembuat / Seniman (Opsional)',
+                    hint: 'Kosongkan jika karya milik sendiri',
+                    helperText:
+                        'Tampil sebagai ARTISAN di sertifikat. Isi jika karya milik seniman lain; jika kosong akan diisi nama akun Anda.',
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(

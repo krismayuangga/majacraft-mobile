@@ -13,6 +13,7 @@ class StudioProduct {
   final int? height; // in cm
   final String? origin;
   final String? material;
+  final String? creatorName;
   final String? kondisi; // "Baru" or "Bekas Layak"
   final List<String> tags;
   final List<String> imageUrls;
@@ -39,6 +40,7 @@ class StudioProduct {
     this.height,
     this.origin,
     this.material,
+    this.creatorName,
     this.kondisi,
     this.tags = const [],
     this.imageUrls = const [],
@@ -101,6 +103,7 @@ class StudioProduct {
       height: json['height'] != null ? _parseInt(json['height']) : null,
       origin: json['origin']?.toString(),
       material: json['material']?.toString(),
+      creatorName: json['creatorName']?.toString(),
       kondisi: json['kondisi']?.toString(),
       tags: tagsList,
       imageUrls: images,

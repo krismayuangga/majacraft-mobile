@@ -37,6 +37,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   late final TextEditingController _heightController;
   late final TextEditingController _originController;
   late final TextEditingController _materialController;
+  late final TextEditingController _creatorNameController;
   late final TextEditingController _tagsController;
 
   // Form state
@@ -86,6 +87,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
     );
     _originController = TextEditingController(text: product.origin ?? '');
     _materialController = TextEditingController(text: product.material ?? '');
+    _creatorNameController = TextEditingController(
+      text: product.creatorName ?? '',
+    );
     _tagsController = TextEditingController(
       text: product.tags?.join(', ') ?? '',
     );
@@ -127,6 +131,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _heightController.dispose();
     _originController.dispose();
     _materialController.dispose();
+    _creatorNameController.dispose();
     _tagsController.dispose();
     super.dispose();
   }
@@ -383,6 +388,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
         'material': _materialController.text.trim().isNotEmpty
             ? _materialController.text.trim()
             : null,
+        'creatorName': _creatorNameController.text.trim().isNotEmpty
+            ? _creatorNameController.text.trim()
+            : null,
         'kondisi': _selectedKondisi,
         'tags': _tagsController.text.trim().isNotEmpty
             ? _tagsController.text
@@ -588,6 +596,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     controller: _originController,
                     label: 'Asal Daerah',
                     hint: 'Yogyakarta',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _creatorNameController,
+                    label: 'Nama Pembuat / Seniman (Opsional)',
+                    hint: 'Kosongkan jika karya milik sendiri',
+                    helperText:
+                        'Tampil sebagai ARTISAN di sertifikat. Isi jika karya milik seniman lain.',
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
