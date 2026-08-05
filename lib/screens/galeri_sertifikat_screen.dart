@@ -231,7 +231,7 @@ class _GaleriSertifikatScreenState extends State<GaleriSertifikatScreen> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 0.72,
+                          childAspectRatio: 0.62,
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
                         ),
@@ -377,32 +377,34 @@ class _CertCard extends StatelessWidget {
             ),
             // Info
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     cert.productName,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     cert.sellerName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     shortId,
                     style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.grey.shade400,
+                      fontSize: 10,
+                      color: Colors.grey.shade500,
                       fontFamily: 'monospace',
                     ),
                   ),
