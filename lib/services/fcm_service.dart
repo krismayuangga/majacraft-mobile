@@ -127,9 +127,6 @@ class FCMService {
     print('  Body: ${message.notification?.body}');
     print('  Data: ${message.data}');
 
-    // Chat hanya tampil di tab Chat, bukan sebagai notifikasi sistem
-    if (message.data['type'] == 'new_chat') return;
-
     if (message.notification != null) {
       _showLocalNotification(message);
     }
@@ -208,6 +205,8 @@ class FCMService {
         }
         break;
       case 'new_chat':
+        // Trigger badge update segera tanpa harus tunggu polling
+        onNewChatReceived?.call();
         _navigateToChat(nav);
         break;
       case 'product_moderated':
@@ -233,6 +232,12 @@ class FCMService {
   static GlobalKey<NavigatorState>? _navigatorKey;
   static void setNavigatorKey(GlobalKey<NavigatorState> key) {
     _navigatorKey = key;
+  }
+
+  // Callback untuk trigger reload badge chat saat FCM chat datang
+  static VoidCallback? onNewChatReceived;
+  static void setOnNewChatReceived(VoidCallback callback) {
+    onNewChatReceived = callback;
   }
 
   void _navigateToDisputeChat(NavigatorState nav, String disputeId) {
@@ -270,9 +275,11 @@ class FCMService {
   void setupForegroundHandlers(BuildContext context) {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('[FCM] Foreground message: ${message.notification?.title}');
-      // Chat hanya tampil di tab Chat, bukan sebagai notifikasi sistem
-      if (message.data['type'] == 'new_chat') return;
       if (message.notification != null) {
+        // Trigger badge chat segera jika ada pesan chat baru
+        if (message.data['type'] == 'new_chat') {
+          onNewChatReceived?.call();
+        }
         // Show local notification
         _showLocalNotification(message);
 

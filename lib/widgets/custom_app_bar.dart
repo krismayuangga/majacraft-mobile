@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../services/notification_service.dart';
 import '../services/chat_service.dart';
 import '../services/api_service.dart';
+import '../services/fcm_service.dart';
 import '../providers/auth_provider.dart';
 import '../screens/notification_list_screen.dart';
 import '../screens/chat_list_screen.dart';
@@ -41,12 +42,13 @@ class _CustomAppBarState extends State<CustomAppBar> {
   @override
   void initState() {
     super.initState();
-    // Load + polling HANYA di HomeScreen — cegah N screen × N request
     if (widget.shouldPoll) {
       _loadUnreadCount();
       _loadChatUnreadCount();
       _startChatPolling();
       _startNotifPolling();
+      // Update badge langsung saat FCM chat datang (tanpa tunggu polling)
+      FCMService.setOnNewChatReceived(_loadChatUnreadCount);
     }
   }
 
@@ -105,7 +107,11 @@ class _CustomAppBarState extends State<CustomAppBar> {
       final notifications = await _notificationService.getNotifications(
         authProvider.token!,
       );
-      final unreadCount = _notificationService.getUnreadCount(notifications);
+      // Filter chat dari badge notifikasi bell — chat hanya di ikon chat
+      final nonChatNotifs = notifications
+          .where((n) => n.type != 'new_chat')
+          .toList();
+      final unreadCount = _notificationService.getUnreadCount(nonChatNotifs);
 
       if (mounted) {
         setState(() {
