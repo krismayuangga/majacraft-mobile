@@ -64,9 +64,13 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
 
   void _applyFilter() {
     setState(() {
+      // Chat hanya tampil di tab Chat — filter dari halaman notifikasi
+      final nonChat = _notifications
+          .where((n) => n.type != NotificationType.newChat)
+          .toList();
       _filteredNotifications = _showUnreadOnly
-          ? _notifications.where((n) => !n.read).toList()
-          : _notifications;
+          ? nonChat.where((n) => !n.read).toList()
+          : nonChat;
     });
   }
 

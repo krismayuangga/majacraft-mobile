@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/notification_service.dart';
+import '../models/notification.dart';
 import '../services/chat_service.dart';
 import '../services/api_service.dart';
 import '../services/fcm_service.dart';
@@ -109,7 +110,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       );
       // Filter chat dari badge notifikasi bell — chat hanya di ikon chat
       final nonChatNotifs = notifications
-          .where((n) => n.type != 'new_chat')
+          .where((n) => n.type != NotificationType.newChat)
           .toList();
       final unreadCount = _notificationService.getUnreadCount(nonChatNotifs);
 
