@@ -231,7 +231,7 @@ class _GaleriSertifikatScreenState extends State<GaleriSertifikatScreen> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 0.62,
+                          mainAxisExtent: 280,
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
                         ),

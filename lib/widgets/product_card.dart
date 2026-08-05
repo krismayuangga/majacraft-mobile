@@ -237,22 +237,19 @@ class _ProductCardState extends State<ProductCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Product Name
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            widget.product.name,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              height: 1.2,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                        // Product Name — tidak pakai Expanded agar tidak ada space kosong
+                        Text(
+                          widget.product.name,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
 
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 2),
 
                         // Price
                         Row(
@@ -284,13 +281,38 @@ class _ProductCardState extends State<ProductCard> {
                           ],
                         ),
 
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 2),
 
-                        // Seller Info
+                        // Seller name (store)
                         Row(
                           children: [
                             Icon(
-                              Icons.store,
+                              Icons.storefront_outlined,
+                              size: 9,
+                              color: Colors.brown.shade600,
+                            ),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                widget.product.sellerName,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.grey.shade700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 1),
+
+                        // Seller location
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
                               size: 9,
                               color: Colors.brown.shade700,
                             ),
