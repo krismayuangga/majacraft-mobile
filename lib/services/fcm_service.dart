@@ -127,7 +127,9 @@ class FCMService {
     print('  Body: ${message.notification?.body}');
     print('  Data: ${message.data}');
 
-    // Show local notification when app is in foreground
+    // Chat hanya tampil di tab Chat, bukan sebagai notifikasi sistem
+    if (message.data['type'] == 'new_chat') return;
+
     if (message.notification != null) {
       _showLocalNotification(message);
     }
@@ -268,6 +270,8 @@ class FCMService {
   void setupForegroundHandlers(BuildContext context) {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('[FCM] Foreground message: ${message.notification?.title}');
+      // Chat hanya tampil di tab Chat, bukan sebagai notifikasi sistem
+      if (message.data['type'] == 'new_chat') return;
       if (message.notification != null) {
         // Show local notification
         _showLocalNotification(message);
