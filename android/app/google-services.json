@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "1089490083968-ltg644f9iu3diqtp11df9lidc5ces7b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "id.majacraft.majacraft_mobile",
+            "certificate_hash": "f5cdd09a9c1679e2ac55d40e05a65bd9cb8d5eac"
+          }
+        },
+        {
           "client_id": "1089490083968-mpv497utnj95294vtjid83j8g83i0ooe.apps.googleusercontent.com",
           "client_type": 3
         }
