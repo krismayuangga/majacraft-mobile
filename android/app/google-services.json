@@ -30,6 +30,22 @@
           }
         },
         {
+          "client_id": "1089490083968-ssslccashuh5puchuk5jb5is1uqog92i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "id.majacraft.majacraft_mobile",
+            "certificate_hash": "76b675ad6df96d09f8ef81166c9a32f9455faed6"
+          }
+        },
+        {
+          "client_id": "1089490083968-ssslccashuh5puchuk5jb5is1uqog92i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "id.majacraft.majacraft_mobile",
+            "certificate_hash": "76b675ad6df96d09f8ef81166c9a32f9455faed6"
+          }
+        },
+        {
           "client_id": "1089490083968-mpv497utnj95294vtjid83j8g83i0ooe.apps.googleusercontent.com",
           "client_type": 3
         }
